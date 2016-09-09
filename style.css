@@ -1,0 +1,38 @@
+body {
+    background-color: lightblue;
+    position: relative;
+    top: 36px;
+    #left: 2px;
+    #right: 2px;
+    bottom: 0px;
+    height: auto;
+    width: 1400px;
+    padding: 15px 15px 15px 15px;
+    padding-bottom: 100px;
+    margin: 0px auto 0px auto;
+    display: block;
+}
+
+h1 {
+    color: navy;
+    text-align:center;
+    padding-top: 50px;
+    font-size: 60px;
+
+}
+
+p {
+    margin-left:auto;
+    margin-right:auto;
+    width: 70%;
+    font-size: 22px;
+}
+
+img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto
+}
+#center {
+    text-align:center;
+}
