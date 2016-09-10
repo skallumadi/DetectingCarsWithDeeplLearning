@@ -22,8 +22,7 @@ p {
 }
 a {
     color:#ccc;
-    text-decoration:none;
-    font-size: 40px;
+    //text-decoration:none;
 }
 img {
     display: block;
@@ -57,4 +56,9 @@ img {
     background: #666;
     line-height: 40px;
     height: 80px;
+    font-size: 40px;
+
+}
+ul {
+	margin-bottom:10px;
 }
