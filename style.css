@@ -1,5 +1,4 @@
 body {
-<<<<<<< HEAD
     margin: 0px 0px 0px 0px;
     padding: 0px 0px 0px 0px;
     font-family: verdana, arial, helvetica, sans-serif;
@@ -13,34 +12,11 @@ h1 {
     text-align:center;
     padding-top: 50px;
     font-size: 50px;
-=======
-    background-color: lightblue;
-    position: relative;
-    top: 36px;
-    #left: 2px;
-    #right: 2px;
-    bottom: 0px;
-    height: auto;
-    width: 1400px;
-    padding: 15px 15px 15px 15px;
-    padding-bottom: 100px;
-    margin: 0px auto 0px auto;
-    display: block;
-}
-
-h1 {
-    color: navy;
-    text-align:center;
-    padding-top: 50px;
-    font-size: 60px;
-
->>>>>>> refs/remotes/origin/gh-pages
 }
 
 p {
     margin-left:auto;
     margin-right:auto;
-<<<<<<< HEAD
     width: 90%;
     font-size: 22px;
 }
@@ -48,18 +24,11 @@ a {
     color:#ccc;
     //text-decoration:none;
 }
-=======
-    width: 70%;
-    font-size: 22px;
-}
-
->>>>>>> refs/remotes/origin/gh-pages
 img {
     display: block;
     margin-left: auto;
     margin-right: auto
 }
-<<<<<<< HEAD
 .center {
     text-align:center;
 }
@@ -92,8 +61,4 @@ img {
 }
 ul {
 	margin-bottom:10px;
-=======
-#center {
-    text-align:center;
->>>>>>> refs/remotes/origin/gh-pages
 }
