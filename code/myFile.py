@@ -1,44 +1,45 @@
-import msvcrt
+#got rid of msvcrt. it is Windows specific and cant work on ubuntu anyways
 import cv2
-import numpy
+import numpy as np
 
 hasDown = False;
-escape = False; 
-x1 = 0;
-x2 = 0;
-y1 = 0;
-y2 = 0;
+rectangle_points = []
+
 def mouseEvents(event, x , y, flags, params):
-    global hasDown
-    global x1
-    global x2
-    global y1
-    global y2
-    global img
+    global hasDown, img
+    global rectangle_points
+
     if(event == cv2.EVENT_LBUTTONDOWN):
         hasDown=True
-        x1 = x;
-        y1= y;
-        print("Mouse position x:" + str(x)+ " y: " + str(y))
-    elif(event== cv2.EVENT_LBUTTONUP):
-        print("Mouse position ending x: " + str(x) + " y: " + str(y))
-        if(hasDown==True):
-            x2 = x;
-            y2 = y;
-            cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0), 2)
-            
-            
-        
 
-img = cv2.imread('parkinglot.jpg', 0)
-cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+    if(event == cv2.EVENT_MOUSEMOVE and hasDown):
+        #while the mouse is held, every time it moves add a reference point for
+        #the rectangle that will be drawn at the end
+        rectangle_points.append((x, y))
+        cv2.circle(img, (x,y), 2, (0,255,0)) #draw circle for visual reference
+
+    if(event== cv2.EVENT_LBUTTONUP):
+        hasDown = False
+        #draw rectangle
+        n_array = np.array(rectangle_points) #convert list of points to array
+        rectangle = cv2.minAreaRect(n_array) #find points and angle of rect
+        box = cv2.cv.BoxPoints(rectangle) #convert to proper coordinate points
+        box = np.int0(box) #some numpy nonsense. required to work, dunno what it does though
+
+        cv2.drawContours(img, [box], 0, (0,255,0), 2) #draw lines based on box
+        rectangle_points = [] #reset list to use for the next rectangle
+
+
+img = cv2.imread('Parking-Lot.jpg')
+cv2.namedWindow('image')
 cv2.setMouseCallback('image', mouseEvents)
 
-while True:
+Running = True
+while Running:
     cv2.imshow('image', img)
-    cv2.waitKey(0)
-    if msvcrt.kbhit() and msvcrt.getch() == chr(27).encode():
+
+    key = cv2.waitKey(1) & 0xFF
+    if key == ord('c'):
         print('escape')
         cv2.destroyAllWindows()
-        break;
-    
+        Running = False
