@@ -14,13 +14,28 @@ class App:
         self.cv2_img = self.load_cv2_image(image_path, (800,600))
         self.tk_img = self.get_imageTK_obj(self.cv2_img)
 
-        #image display area
+        # image display area
         self.canvas=tk.Canvas(self.window, height=600, width=800)
         self.canvas_image = self.canvas.create_image(0,0, image=self.tk_img, anchor=tk.NW)
         self.canvas.image = self.tk_img #if a reference is not kept of the image, it will be garbage collected out of existence.
 
-        self.canvas.pack(side='bottom', fill='both', expand='yes')
-
+        self.canvas.grid(row=0, column=0, sticky='N')
+        
+        # Information Labels
+        self.numMonitoredSpotsLabel = tk.Label(self.window, text='Monitored')
+        self.numOccupiedSpotsLabel = tk.Label(self.window, text='Occupied')
+        self.numVacantSpotsLabel = tk.Label(self.window, text='Vacant')
+        
+        self.numMonitoredSpotsLabel.grid(row=1, column=0, sticky='W')
+        self.numOccupiedSpotsLabel.grid(row=2, column=0, sticky='W')
+        self.numVacantSpotsLabel.grid(row=3, column=0, sticky='W')
+        
+        # exit button
+        self.exitButton = tk.Button(self.window, text='Quit', command=self.window.destroy)
+        
+        self.exitButton.grid(row=4, column=0, sticky='E')
+        
+        # bind window events
         self.window.bind('c', self.window_exit)
         self.window.bind('<B1-Motion>', self.draw_area)
         self.window.bind('<ButtonRelease-1>', self.create_rectangle)
