@@ -1,7 +1,6 @@
 import os, sys
 import cv2
 import numpy as np
-from Tkinter import *
 import tkMessageBox
 import Tkinter as tk
 from PIL import Image, ImageTk  # imagetk needed to be installed manually. pip install Pillow
@@ -28,12 +27,16 @@ class App:
 
         self.canvas.grid(row=0, column=0, sticky='N')
 
+        # Parking Spot List
+        self.parkingspot_listbox = tk.Listbox(self.window, width=20, height=30)
+        self.scrollbar = tk.Scrollbar(self.window, orient=tk.VERTICAL)
+        #self.parkingspot_listbox.config(yscrollcommand=self.scrollbar.set)
+        #self.scrollbar.config(command=self.parkingspot_listbox.yview)
+
+        self.parkingspot_listbox.grid(row=0, column=1, rowspan=3, sticky='N')
+        #self.scrollbar.grid(row=0, column=1, sticky='E')
+
         # Information Labels
-        self.listBox = tk.Listbox(self.window, width=20, height=2)
-        self.scrollbar = Scrollbar(self.window, orient= VERTICAL)
-        self.listBox.config(yscrollcommand=self.scrollbar.set)
-        self.scrollbar.config(command=self.listBox.yview)
-        
         self.numMonitoredSpotsLabel = tk.Label(self.window, text='Monitored')
         self.numOccupiedSpotsLabel = tk.Label(self.window, text='Occupied')
         self.numVacantSpotsLabel = tk.Label(self.window, text='Vacant')
@@ -41,21 +44,20 @@ class App:
         self.numMonitoredSpotsLabel.grid(row=1, column=0, sticky='W')
         self.numOccupiedSpotsLabel.grid(row=2, column=0, sticky='W')
         self.numVacantSpotsLabel.grid(row=3, column=0, sticky='W')
-        self.listBox.grid(row=0, column=1, sticky='W')
-        self.scrollbar.grid(row=0, column=1, sticky='E')
 
         # exit button
         self.exitButton = tk.Button(self.window, text='Quit', command=self.window.destroy)
 
-        self.exitButton.grid(row=5, column=0, sticky='E')
+        self.exitButton.grid(row=5, column=1, sticky='E')
 
         # bind window events
         self.window.bind('c', self.window_exit)
-        self.window.bind('<B1-Motion>', self.draw_area)
-        self.window.bind('<ButtonRelease-1>', self.create_rectangle)
-        
-
-        self.current_points_list = []  # definitely should be held in a pklot class or something
+        # bind canvas events
+        self.canvas.bind('<B1-Motion>', self.draw_area)
+        self.canvas.bind('<ButtonRelease-1>', self.create_rectangle)
+        # bind list events
+        self.parkingspot_listbox.bind("<<ListboxSelect>>", self.onselect)
+        self.current_points_list = []  # used for the box currently being drawn
 
     def window_exit(self, event):
         """ listen for program exit button
@@ -78,7 +80,7 @@ class App:
 
         try:  # someone clicked and released immediately. just ignore it pretty much.
             rectangle = cv2.minAreaRect(n_array)  # find points and angle of rect
-            box = cv2.boxPoints(rectangle)  # convert to proper coordinate points
+            box = cv2.cv.BoxPoints(rectangle)  # convert to proper coordinate points
             box = np.int0(box)  # some numpy nonsense. required to work, dunno what it does though
 
             # convert array tuple thing into coordinate list for tkinter
@@ -87,9 +89,10 @@ class App:
                 coord_list.append(box[i][0])
                 coord_list.append(box[i][1])
 
-            self.listBox.insert(END, coord_list)
+            #TODO: move this to an update function
+            #self.parkingspot_listbox.insert(tk.END, coord_list)
             self.parkinglot.addSpot(coord_list)
-            
+
 
         except cv2.error:
             pass
@@ -98,10 +101,27 @@ class App:
         self.canvas.delete('indicator')
         self.draw_rectangles()
 
+        self.update_all()
+
     def draw_rectangles(self):
         self.canvas.delete('parking spots')
         for spot in parkinglot.getParkingSpots():
             self.canvas.create_polygon(spot.location, fill='', outline='lime', tags='parking spots')
+
+    def update_parkingspot_list(self):
+        self.parkingspot_listbox.delete(0, tk.END)
+        for spot in self.parkinglot.getParkingSpots():
+            self.parkingspot_listbox.insert(tk.END, spot.idNum)
+
+    def onselect(self, event):
+        index = event.widget.curselection()[0]
+        selected_spot = self.parkinglot.getParkingSpots()[index]
+        self.canvas.delete('highlight')
+        self.canvas.create_polygon(selected_spot.location, fill='', outline='white', tags='highlight', width=3)
+
+    def update_all(self):
+        self.draw_rectangles()
+        self.update_parkingspot_list()
 
     def load_cv2_image(self, path, dimensions):
         """ From the given path, load and resize a jpeg
