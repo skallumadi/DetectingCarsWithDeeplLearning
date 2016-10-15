@@ -1,6 +1,8 @@
 import os, sys
 import cv2
 import numpy as np
+from Tkinter import *
+import tkMessageBox
 import Tkinter as tk
 from PIL import Image, ImageTk  # imagetk needed to be installed manually. pip install Pillow
 
@@ -10,6 +12,7 @@ from ParkingLot import *
 class App:
     def __init__(self, window, image_path, PKLot):
         self.parkinglot = PKLot
+       
 
         self.window = window
         self.window.title("Display Area")
@@ -26,6 +29,11 @@ class App:
         self.canvas.grid(row=0, column=0, sticky='N')
 
         # Information Labels
+        self.listBox = tk.Listbox(self.window, width=20, height=2)
+        self.scrollbar = Scrollbar(self.window, orient= VERTICAL)
+        self.listBox.config(yscrollcommand=self.scrollbar.set)
+        self.scrollbar.config(command=self.listBox.yview)
+        
         self.numMonitoredSpotsLabel = tk.Label(self.window, text='Monitored')
         self.numOccupiedSpotsLabel = tk.Label(self.window, text='Occupied')
         self.numVacantSpotsLabel = tk.Label(self.window, text='Vacant')
@@ -33,16 +41,19 @@ class App:
         self.numMonitoredSpotsLabel.grid(row=1, column=0, sticky='W')
         self.numOccupiedSpotsLabel.grid(row=2, column=0, sticky='W')
         self.numVacantSpotsLabel.grid(row=3, column=0, sticky='W')
+        self.listBox.grid(row=0, column=1, sticky='W')
+        self.scrollbar.grid(row=0, column=1, sticky='E')
 
         # exit button
         self.exitButton = tk.Button(self.window, text='Quit', command=self.window.destroy)
 
-        self.exitButton.grid(row=4, column=0, sticky='E')
+        self.exitButton.grid(row=5, column=0, sticky='E')
 
         # bind window events
         self.window.bind('c', self.window_exit)
         self.window.bind('<B1-Motion>', self.draw_area)
         self.window.bind('<ButtonRelease-1>', self.create_rectangle)
+        
 
         self.current_points_list = []  # definitely should be held in a pklot class or something
 
@@ -67,7 +78,7 @@ class App:
 
         try:  # someone clicked and released immediately. just ignore it pretty much.
             rectangle = cv2.minAreaRect(n_array)  # find points and angle of rect
-            box = cv2.cv.BoxPoints(rectangle)  # convert to proper coordinate points
+            box = cv2.boxPoints(rectangle)  # convert to proper coordinate points
             box = np.int0(box)  # some numpy nonsense. required to work, dunno what it does though
 
             # convert array tuple thing into coordinate list for tkinter
@@ -76,7 +87,9 @@ class App:
                 coord_list.append(box[i][0])
                 coord_list.append(box[i][1])
 
+            self.listBox.insert(END, coord_list)
             self.parkinglot.addSpot(coord_list)
+            
 
         except cv2.error:
             pass
