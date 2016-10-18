@@ -4,7 +4,7 @@ import Tkinter as tk
 from PIL import Image, ImageTk  # imagetk needed to be installed manually. pip install Pillow
 
 from ParkingLot import *
-
+#this is to demonstrate
 
 class CanvasArea(tk.Canvas):
     """ A canvas object that is to be used as the main display area in the app.
