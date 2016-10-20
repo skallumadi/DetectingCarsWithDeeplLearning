@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.2">
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>10</x>
+      <y>0</y>
+      <w>360</w>
+      <h>190</h>
+    </coordinates>
+    <panel_attributes>App
+--
+-parkinglot : ParkingLot
+-canvas : CanvasArea
+-exitButton : Tk.Button
+-parkingspot_listbox : SpotList
+-window : Tk.root
+--
+init(window, image_path, PKLot)
+window_exit()
+update_all()
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>340</x>
+      <y>240</y>
+      <w>300</w>
+      <h>190</h>
+    </coordinates>
+    <panel_attributes>SpotList
+--
+-parkinglot : ParkingLot
+-current_selection : int
+-width : int
+-window : Tk.root
+-current_length : int
+-height : int
+--
++init(window, parkinglot, width, height)
++update_parkingspot_list()
++onSelect()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>800</x>
+      <y>590</y>
+      <w>300</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>ImageClassifier
+--
+-archive_path : string
+--
++init(archive_path)
++unzip_archive()
++classify()
++get_net()
++read_labels()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>0</x>
+      <y>240</y>
+      <w>300</w>
+      <h>280</h>
+    </coordinates>
+    <panel_attributes>CanvasArea
+--
+-cv2_img : CV2_img
+-image : Tk.Image
+-parkinglot : ParkingLot
+-tk_img : Tk.Image
+-window : Tk.root
+-highlightedLotLocation : list[int]
+-current_points_list : list[int]
+-dimensions : tuple(int, int)
+--
++init(window, parkinglot, imgpath, dimensions)
++load_cv2_image(path, dimensions)
++get_imageTK_obj(cv2Img)
++drawArea()
++createRectangle()
++draw_rectangles()
++update_all()</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>700</x>
+      <y>40</y>
+      <w>300</w>
+      <h>280</h>
+    </coordinates>
+    <panel_attributes>ParkingLot
+--
+-numOccupied : int
+-parkingSpots : list[Spot]
+-infoPath : string
+-numSpots : int
+-numVacant : int
+-currentLotImage : string
+--
++init()
++loadXML(filepath)
++getParkingSpots() : list[Spot]
++saveXML(filepath) 
++getOccupied() : list[Spot]
++getVacant() : list[Spot]
++addSpot(coordinates)
++removeSpot(id)
++update(image)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>660</x>
+      <y>410</y>
+      <w>300</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>Spot
+--
+-location : list[int]
+-idNum : int
+-status : String
+--
++init(idNumber, location)
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>180</x>
+      <y>180</y>
+      <w>30</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>360</x>
+      <y>130</y>
+      <w>140</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;120.0;10.0;120.0;110.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>800</x>
+      <y>310</y>
+      <w>30</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;100.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>360</x>
+      <y>70</y>
+      <w>350</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;330.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>970</x>
+      <y>310</y>
+      <w>30</w>
+      <h>300</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;280.0</additional_attributes>
+  </element>
+</diagram>
