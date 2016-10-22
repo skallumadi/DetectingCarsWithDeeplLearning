@@ -96,9 +96,9 @@ class CanvasArea(tk.Canvas):
         self.delete('indicator')  # clear out all those little dots from drawing
 
     def draw_rectangles(self):
-        self.delete('parking spots')
+        self.delete('parkingspot')
         for spot in self.parkinglot.getParkingSpots():
-            self.create_polygon(spot.location, fill='', outline='lime', tags='parking spots')
+            self.create_polygon(spot.location, fill='', outline='lime', tags='parkingspot')
 
     def update_all(self, events=None):
         self.draw_rectangles()
@@ -121,13 +121,16 @@ class SpotList(tk.Listbox):
 
         # keep track of the length of the list, to use when updating
         self.current_length = 0
-        self.current_selection = -1  # track current selection outside of default ANCHOR
+        self.current_selection = 0  # track current selection outside of default ANCHOR
         # bind list events
         self.bind("<<ListboxSelect>>", self.onSelect)
 
     def update_parkingspot_list(self):
         """ Redraw the list from the current collection of parking spaces.
             Only do this if there has been a change in the size of the parking spot list
+
+            This thing has given me the largest headache. but i THINK it works like it is supposed to now. please.
+            If ever there is a mysterious problem with highlighting or list things, start here.
         """
 
         numParkingSpots = len(self.parkinglot.getParkingSpots())
@@ -135,9 +138,12 @@ class SpotList(tk.Listbox):
         # update if a spot has been created
         # ugly but currently it works
         if numParkingSpots != self.current_length:
-
             if numParkingSpots > self.current_length:
                 self.current_selection = numParkingSpots - 1
+
+            if numParkingSpots <= self.current_selection:
+                self.current_selection -= 1
+
             self.current_length = numParkingSpots
 
             self.delete(0, tk.END)
@@ -148,6 +154,13 @@ class SpotList(tk.Listbox):
             self.selection_set(self.current_selection)
 
     def onSelect(self, events):
-        index = events.widget.get(int(events.widget.curselection()[0])) - 1
+        index = self.curselection()[0]
         self.current_selection = index
         self.update_parkingspot_list()
+
+    def getSelectionID(self, num):
+        return self.get(num)
+
+    def reset(self):
+        self.current_length = 0
+        self.current_selection = 0

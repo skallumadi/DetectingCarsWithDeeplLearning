@@ -1,1 +1,1 @@
-<root><ParkingLot><Spot id="1" location="311 436 245 345 387 242 453 334" /></ParkingLot></root>
+<root><ParkingLot><NextAvailableID counter="5" /><Spot id="0" location="127 300 114 299 124 168 137 169" /><Spot id="1" location="194 310 176 309 177 190 195 191" /><Spot id="2" location="291 310 272 308 284 181 303 183" /></ParkingLot></root>

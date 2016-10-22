@@ -59,13 +59,24 @@ class SetupApp(tk.Frame):
         self.saveXMLButton = tk.Button(self.window, text='Save Lot', command=self.parkinglot.saveXML)
         self.saveXMLButton.grid(row=6, column=1, sticky='E')
 
-        self.loadXMLButton = tk.Button(self.window, text='Load Lot', command=self.parkinglot.loadXML)
+        self.loadXMLButton = tk.Button(self.window, text='Load Lot', command=self.loadNewLot)
         self.loadXMLButton.grid(row=7, column=1, sticky='E')
+
+        # delete spot button
+        self.deleteSpotButton = tk.Button(self.window, text='Delete Selected', command=self.deleteSelection)
+        self.deleteSpotButton.grid(row=8, column=1, sticky='E')
 
         # bind root events
         self.window.bind('c', self.window_exit)
 
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
+
+    def deleteSelection(self):
+        self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID(self.parkingspot_listbox.current_selection))
+
+    def loadNewLot(self):
+        self.parkingspot_listbox.reset()
+        self.parkinglot.loadXML()
 
 
     def window_exit(self, event):
@@ -77,10 +88,12 @@ class SetupApp(tk.Frame):
         self.parkingspot_listbox.update_parkingspot_list()
 
         listpos = self.parkingspot_listbox.current_selection
+        idNumber = self.parkingspot_listbox.getSelectionID(listpos)
+
         try:  # long af
-            self.canvas.highlightedLotLocation = self.parkinglot.getParkingSpots()[listpos].location
-        except IndexError:
-            pass
+            self.canvas.highlightedLotLocation = self.parkinglot.getSingleSpot(idNumber).location
+        except (IndexError, AttributeError) as e:
+            self.canvas.highlightedLotLocation = [0,0,0,0,0,0,0,0]
 
         self.canvas.update_all()
 
@@ -115,6 +128,7 @@ class MonitorApp(tk.Frame):
         self.canvas.update_all()
         self.window.after(100, self.update_all)
 
+
 if __name__ == "__main__":
 
     image_path = "Parking-Lot.jpg"
@@ -125,7 +139,9 @@ if __name__ == "__main__":
         sys.exit()
 
     root = tk.Tk()
+
     #parkinglot = ParkingLot()  # eventually this will be from a saved file.
     #app = SetupApp(root, image_path, parkinglot)
+
     app = RoleSelect(root)
     root.mainloop()

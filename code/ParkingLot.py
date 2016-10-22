@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 class ParkingLot:
     def __init__(self, path=None):
         self.infoPath = ""  # xml file location for parking spots
-        self.numSpots = 0  # how many spots are on record
+        self.spotIDCounter = 0  # how many spots are on record
         self.numOccupied = 0
         self.numVacant = 0
         self.parkingSpots = []  # a list of all the parking spots and status.
@@ -26,31 +26,35 @@ class ParkingLot:
         self.parkingSpots = []
 
         tree = ET.ElementTree(file=self.infoPath)
+        self.spotIDCounter = int(next(tree.iter(tag='NextAvailableID')).attrib['counter'])
         for elem in tree.iter(tag='Spot'):
             loc = elem.attrib['location']
-            self.addSpot([int(x) for x in loc.split()])
+            idNumber = elem.attrib['id']
+            self.addSpot([int(x) for x in loc.split()], idNumber)
 
     def saveXML(self):
         """ save the current list of parking spaces.
         """
         root = ET.Element('root')
         pklot = ET.SubElement(root, "ParkingLot")
+
+        idCounter = ET.SubElement(pklot, "NextAvailableID", counter=str(self.spotIDCounter))
         for spot in self.parkingSpots:
             ET.SubElement(pklot, 'Spot', id=str(spot.idNum), location=' '.join(str(x) for x in spot.location))
 
         tree = ET.ElementTree(root)
         tree.write(self.infoPath)
 
-    def getParkingSpots(self):
-        """ return a list of all parking spots in the lot
-        """
-        return self.parkingSpots
-
     def saveUsage(self, filePath):
         """ save current lot information to separate file.
             how many spots are open, which ones specifically, time, etc.
         """
         pass
+
+    def getParkingSpots(self):
+        """ return a list of all parking spots in the lot
+        """
+        return self.parkingSpots
 
     def getOccupied(self):
         """ get a list of all occupied spaces in the lot.
@@ -60,7 +64,11 @@ class ParkingLot:
             if spot.status == 'occupied':
                 occupiedList.append(spot)
         return occupiedList
-        pass
+
+    def getSingleSpot(self, idNum):
+        for spot in self.parkingSpots:
+            if spot.idNum == idNum:
+                return spot
 
     def getVacant(self):
         """ get a list of all vacant spaces in the lot.
@@ -70,9 +78,8 @@ class ParkingLot:
             if spot.status == 'vacant':
                 vacantList.append(spot)
         return vacantList
-        pass
 
-    def addSpot(self, coordinates):
+    def addSpot(self, coordinates, idNum=None):
         """ add a region of the parking lot as a new space to be monitored.
             coordinates is expected to be a list or tuple 8 items long.
             4 groups of x y coordinates.
@@ -80,23 +87,23 @@ class ParkingLot:
             [0, 0, 10, 14, 30, 30, 56, 67]
              x  y  x   y   x   y   x   y
         """
-        self.numSpots += 1
-        self.parkingSpots.append(Spot(self.numSpots, coordinates, 'vacant'))
+        if idNum:
+            self.parkingSpots.append(Spot(idNum, coordinates, 'vacant'))
+        else:
+            self.parkingSpots.append(Spot(self.spotIDCounter, coordinates, 'vacant'))
+            self.spotIDCounter += 1
         # self.update(self.currentLotImage)
-        pass
 
-    def removeSpot(self, id):
+    def removeSpot(self, idNum):
         """ remove a particular spot from the list of monitored locations.
         """
         for spot in self.parkingSpots:
-            if spot.idNum == id:
+            if spot.idNum == idNum:
                 self.parkingSpots.remove(spot)
-                for i in range(len(self.parkingSpots)):  # relabel all spots to keep the id numbers
-                    self.parkingSpots[i].idNum = i  # representative of the number of spots
+                #for i in range(len(self.parkingSpots)):  # relabel all spots to keep the id numbers
+                #    self.parkingSpots[i].idNum = i  # representative of the number of spots
                 return
-
-        raise Exception("No spot with given id found.")
-        pass
+        raise Exception("No spot with given id " + str(idNum) + " found.")
 
     def update(self, image):
         """ update the current information for this parking lot.
@@ -104,4 +111,3 @@ class ParkingLot:
         """
         self.currentLotImage = image
         self.parkingSpots = self.imageClassifier.process(self.parkingSpots)
-        pass
