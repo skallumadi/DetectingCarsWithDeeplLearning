@@ -1,8 +1,9 @@
 from Spot import *
+import xml.etree.ElementTree as ET
 
 
 class ParkingLot:
-    def __init__(self):
+    def __init__(self, path=None):
         self.infoPath = ""  # xml file location for parking spots
         self.numSpots = 0  # how many spots are on record
         self.numOccupied = 0
@@ -12,22 +13,38 @@ class ParkingLot:
         # self.currentLotImage = #the most recent image for the parking lot
         # self.imageClassifier = #link to image classifier object to process images
 
-    def loadXML(self, filePath):
+        if path:
+            self.infoPath = path
+            self.loadXML()
+        else:
+            self.infoPath = 'testxml.xml'
+
+    def loadXML(self):
         """ load xml file and put information in the right places.
             number of spots, initialize parking spots list.
         """
+        self.parkingSpots = []
+
+        tree = ET.ElementTree(file=self.infoPath)
+        for elem in tree.iter(tag='Spot'):
+            loc = elem.attrib['location']
+            self.addSpot([int(x) for x in loc.split()])
+
+    def saveXML(self):
+        """ save the current list of parking spaces.
+        """
+        root = ET.Element('root')
+        pklot = ET.SubElement(root, "ParkingLot")
+        for spot in self.parkingSpots:
+            ET.SubElement(pklot, 'Spot', id=str(spot.idNum), location=' '.join(str(x) for x in spot.location))
+
+        tree = ET.ElementTree(root)
+        tree.write(self.infoPath)
 
     def getParkingSpots(self):
         """ return a list of all parking spots in the lot
         """
         return self.parkingSpots
-        pass
-
-    def saveParkingSpots(self):
-        """ save the current list of parking spaces.
-            meant to be used if a parking spot is added or removed.
-        """
-        pass
 
     def saveUsage(self, filePath):
         """ save current lot information to separate file.
