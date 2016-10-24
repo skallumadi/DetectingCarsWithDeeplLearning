@@ -7,27 +7,30 @@ from ParkingLot import *
 
 
 class RoleSelect(tk.Frame):
-    def __init__(self, root):
+    def __init__(self, parent):
         tk.Frame.__init__(self, master=root)
+        self.pack()
 
-        self.root = root
+        self.parent = parent
 
-        self.selectSetupButton = tk.Button(self.root, text="Open Operator", command=self.startSetup)
-        self.selectMonitorButton = tk.Button(self.root, text="Open Monitor", command=self.startMonitor)
+        self.selectSetupButton = tk.Button(self, text="Open Operator", command=self.startSetup)
+        self.selectMonitorButton = tk.Button(self, text="Open Monitor", command=self.startMonitor)
         self.selectSetupButton.pack(side=tk.TOP)
         self.selectMonitorButton.pack()
 
     def startSetup(self):
-        app = SetupApp(self.root, "Parking-Lot.jpg", ParkingLot())
+        app = SetupApp(self.parent, "Parking-Lot.jpg", ParkingLot())
         self.destroy()
 
     def startMonitor(self):
-        app = MonitorApp(self.root, "Parking-Lot.jpg", ParkingLot("testxml.xml"))
+        app = MonitorApp(self.parent, "Parking-Lot.jpg", ParkingLot("testxml.xml"))
+        self.destroy()
 
 
 class SetupApp(tk.Frame):
     def __init__(self, root, image_path, PKLot):
         tk.Frame.__init__(self, master=root)
+        self.pack()
 
         self.parkinglot = PKLot
 
@@ -35,11 +38,13 @@ class SetupApp(tk.Frame):
         self.window.title("Display Area")
         self.window.configure(background='grey')
 
-        self.canvas = CanvasArea(root, self.parkinglot, image_path, (800, 600))
+        self.canvas = CanvasArea(self, self.parkinglot, image_path, (800, 600))
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
+
+
         # Parking Spot List
-        self.parkingspot_listbox = SpotList(self.window, self.parkinglot, width=20, height=30)
+        self.parkingspot_listbox = SpotList(self, self.parkinglot, width=20, height=30)
         self.parkingspot_listbox.grid(row=0, column=1, rowspan=3, sticky='N')
 
         # Information Labels
@@ -52,18 +57,18 @@ class SetupApp(tk.Frame):
         #self.numVacantSpotsLabel.grid(row=3, column=0, sticky='W')
 
         # exit button
-        self.exitButton = tk.Button(self.window, text='Quit', command=self.window.destroy)
+        self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
         self.exitButton.grid(row=5, column=1, sticky='E')
 
         # test save and load file buttons
-        self.saveXMLButton = tk.Button(self.window, text='Save Lot', command=self.parkinglot.saveXML)
+        self.saveXMLButton = tk.Button(self, text='Save Lot', command=self.parkinglot.saveXML)
         self.saveXMLButton.grid(row=6, column=1, sticky='E')
 
-        self.loadXMLButton = tk.Button(self.window, text='Load Lot', command=self.loadNewLot)
+        self.loadXMLButton = tk.Button(self, text='Load Lot', command=self.loadNewLot)
         self.loadXMLButton.grid(row=7, column=1, sticky='E')
 
         # delete spot button
-        self.deleteSpotButton = tk.Button(self.window, text='Delete Selected', command=self.deleteSelection)
+        self.deleteSpotButton = tk.Button(self, text='Delete Selected', command=self.deleteSelection)
         self.deleteSpotButton.grid(row=8, column=1, sticky='E')
 
         # bind root events
@@ -88,12 +93,18 @@ class SetupApp(tk.Frame):
         self.parkingspot_listbox.update_parkingspot_list()
 
         listpos = self.parkingspot_listbox.current_selection
-        idNumber = self.parkingspot_listbox.getSelectionID(listpos)
+        idNumber = self.parkingspot_listbox.getSelectionID()
 
         try:  # long af
             self.canvas.highlightedLotLocation = self.parkinglot.getSingleSpot(idNumber).location
+            #print "Found"
         except (IndexError, AttributeError) as e:
             self.canvas.highlightedLotLocation = [0,0,0,0,0,0,0,0]
+
+            #print "NotFound"
+            #print listpos
+            #print idNumber
+            #print self.canvas.highlightedLotLocation
 
         self.canvas.update_all()
 
@@ -102,17 +113,20 @@ class SetupApp(tk.Frame):
 
 class MonitorApp(tk.Frame):
     def __init__(self, root, imagePath, PKLot):
+        tk.Frame.__init__(self, master=root)
+        self.pack()
+
         self.parkinglot = PKLot
 
         self.window = root
         self.window.title("Display Area")
         self.window.configure(background='grey')
 
-        self.canvas = CanvasArea(root, self.parkinglot, image_path, (800, 600))
+        self.canvas = CanvasArea(self, self.parkinglot, image_path, (800, 600))
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
         # exit button
-        self.exitButton = tk.Button(self.window, text='Quit', command=self.window.destroy)
+        self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
         self.exitButton.grid(row=1, column=1, sticky='E')
 
         #bind events
@@ -140,8 +154,8 @@ if __name__ == "__main__":
 
     root = tk.Tk()
 
-    #parkinglot = ParkingLot()  # eventually this will be from a saved file.
-    #app = SetupApp(root, image_path, parkinglot)
+    #PKListbox = ParkingLot()  # eventually this will be from a saved file.
+    #app = SetupApp(root, image_path, PKListbox)
 
     app = RoleSelect(root)
     root.mainloop()

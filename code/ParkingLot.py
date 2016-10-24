@@ -40,7 +40,7 @@ class ParkingLot:
 
         idCounter = ET.SubElement(pklot, "NextAvailableID", counter=str(self.spotIDCounter))
         for spot in self.parkingSpots:
-            ET.SubElement(pklot, 'Spot', id=str(spot.idNum), location=' '.join(str(x) for x in spot.location))
+            ET.SubElement(pklot, 'Spot', id=str(spot.id), location=' '.join(str(x) for x in spot.location))
 
         tree = ET.ElementTree(root)
         tree.write(self.infoPath)
@@ -67,7 +67,7 @@ class ParkingLot:
 
     def getSingleSpot(self, idNum):
         for spot in self.parkingSpots:
-            if spot.idNum == idNum:
+            if spot.id == idNum:
                 return spot
 
     def getVacant(self):
@@ -79,7 +79,7 @@ class ParkingLot:
                 vacantList.append(spot)
         return vacantList
 
-    def addSpot(self, coordinates, idNum=None):
+    def addSpot(self, coordinates, ID=None):
         """ add a region of the parking lot as a new space to be monitored.
             coordinates is expected to be a list or tuple 8 items long.
             4 groups of x y coordinates.
@@ -87,23 +87,23 @@ class ParkingLot:
             [0, 0, 10, 14, 30, 30, 56, 67]
              x  y  x   y   x   y   x   y
         """
-        if idNum:
-            self.parkingSpots.append(Spot(idNum, coordinates, 'vacant'))
+        if ID:
+            self.parkingSpots.append(Spot(ID, coordinates, 'vacant'))
         else:
             self.parkingSpots.append(Spot(self.spotIDCounter, coordinates, 'vacant'))
             self.spotIDCounter += 1
         # self.update(self.currentLotImage)
 
-    def removeSpot(self, idNum):
+    def removeSpot(self, ID):
         """ remove a particular spot from the list of monitored locations.
         """
         for spot in self.parkingSpots:
-            if spot.idNum == idNum:
+            if spot.id == ID:
                 self.parkingSpots.remove(spot)
                 #for i in range(len(self.parkingSpots)):  # relabel all spots to keep the id numbers
-                #    self.parkingSpots[i].idNum = i  # representative of the number of spots
+                #    self.parkingSpots[i].id = i  # representative of the number of spots
                 return
-        raise Exception("No spot with given id " + str(idNum) + " found.")
+        raise Exception("No spot with given id " + str(ID) + " found.")
 
     def update(self, image):
         """ update the current information for this parking lot.

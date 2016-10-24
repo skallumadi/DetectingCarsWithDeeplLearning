@@ -1,3 +1,4 @@
 *.pyc
 *.iml
+modules.xml
 workspace.xml

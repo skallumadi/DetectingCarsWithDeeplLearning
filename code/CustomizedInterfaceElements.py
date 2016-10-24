@@ -72,7 +72,7 @@ class CanvasArea(tk.Canvas):
     def createRectangle(self, events):
         """ creates a rectangle from the points stored in self.current_points_list
             using cv2 libraries.
-            adds this rectangle as a new parking spot to self.parkinglot
+            adds this rectangle as a new parking spot to self.PKListbox
         """
         n_array = np.array(self.current_points_list)  # convert list of points to array
 
@@ -124,6 +124,7 @@ class SpotList(tk.Listbox):
         self.current_selection = 0  # track current selection outside of default ANCHOR
         # bind list events
         self.bind("<<ListboxSelect>>", self.onSelect)
+        self.bind("<Double-1>", self.onDoubleClick)
 
     def update_parkingspot_list(self):
         """ Redraw the list from the current collection of parking spaces.
@@ -137,30 +138,55 @@ class SpotList(tk.Listbox):
 
         # update if a spot has been created
         # ugly but currently it works
-        if numParkingSpots != self.current_length:
-            if numParkingSpots > self.current_length:
-                self.current_selection = numParkingSpots - 1
+            #addendum: this used to only execute on changes, but it made problems with renaming spots. now its constant.
+            #if numParkingSpots != self.current_length: #old conditional check
+        if numParkingSpots > self.current_length:
+            self.current_selection = numParkingSpots - 1
 
-            if numParkingSpots <= self.current_selection:
-                self.current_selection -= 1
+        if numParkingSpots <= self.current_selection:
+            self.current_selection -= 1
 
-            self.current_length = numParkingSpots
+        self.current_length = numParkingSpots
 
-            self.delete(0, tk.END)
-            for spot in self.parkinglot.getParkingSpots():
-                self.insert(tk.END, spot.idNum)
+        self.delete(0, tk.END)
+        for spot in self.parkinglot.getParkingSpots():
+            self.insert(tk.END, spot.id)
 
-            self.select_anchor(self.current_selection)
-            self.selection_set(self.current_selection)
+        self.select_anchor(self.current_selection)
+        self.selection_set(self.current_selection)
 
     def onSelect(self, events):
         index = self.curselection()[0]
         self.current_selection = index
         self.update_parkingspot_list()
 
-    def getSelectionID(self, num):
-        return self.get(num)
+    def onDoubleClick(self, events):
+        pop = NameEntryPopup(self)
+
+    def getSelectionID(self):
+        return self.get(self.current_selection)
 
     def reset(self):
         self.current_length = 0
         self.current_selection = 0
+
+
+class NameEntryPopup:
+    def __init__(self, ParkingLotListBox):
+        # to keep consistent this class should really be an instance of a tk frame or something.
+        self.top = tk.Toplevel()
+        self.PKListbox = ParkingLotListBox
+
+        self.label = tk.Label(self.top, text='New Name: ')
+        self.button = tk.Button(self.top, text='submit', command=self.submit)
+        self.entry = tk.Entry(self.top)
+
+        self.label.pack(side=tk.LEFT)
+        self.entry.pack(side=tk.LEFT)
+        self.button.pack(side=tk.LEFT)
+
+        self.top.bind('<Return>', self.submit)
+
+    def submit(self, events=None):
+        self.PKListbox.parkinglot.getSingleSpot(self.PKListbox.getSelectionID()).id = self.entry.get()
+        self.top.destroy()
