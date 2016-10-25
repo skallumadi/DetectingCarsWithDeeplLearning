@@ -41,13 +41,12 @@ class SetupApp(tk.Frame):
         self.canvas = CanvasArea(self, self.parkinglot, image_path, (800, 600))
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
-
-
         # Parking Spot List
-        self.parkingspot_listbox = SpotList(self, self.parkinglot, width=20, height=30)
+        # currently an issue with scrolling on the list. it will scroll and then immediately be set back to to 0.
+        self.parkingspot_listbox = SpotList(self, self.parkinglot, width=20, height=37)
         self.parkingspot_listbox.grid(row=0, column=1, rowspan=3, sticky='N')
 
-        # Information Labels
+        # Information Labels (taken out because currently useless)
         #self.numMonitoredSpotsLabel = tk.Label(self.window, text='Monitored')
         #self.numOccupiedSpotsLabel = tk.Label(self.window, text='Occupied')
         #self.numVacantSpotsLabel = tk.Label(self.window, text='Vacant')

@@ -97,8 +97,10 @@ class CanvasArea(tk.Canvas):
 
     def draw_rectangles(self):
         self.delete('parkingspot')
+        self.delete('parkinglabel')
         for spot in self.parkinglot.getParkingSpots():
             self.create_polygon(spot.location, fill='', outline='lime', tags='parkingspot')
+            self.create_text(spot.location[0]-5, spot.location[1]-5, text=spot.id, tags='parkinglabel')
 
     def update_all(self, events=None):
         self.draw_rectangles()
@@ -152,8 +154,10 @@ class SpotList(tk.Listbox):
         for spot in self.parkinglot.getParkingSpots():
             self.insert(tk.END, spot.id)
 
+        # are all of these really needed? i think the top one can be removed.
         self.select_anchor(self.current_selection)
         self.selection_set(self.current_selection)
+        self.activate(self.current_selection)
 
     def onSelect(self, events):
         index = self.curselection()[0]
