@@ -76,7 +76,7 @@ class SetupApp(tk.Frame):
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
 
     def deleteSelection(self):
-        self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID(self.parkingspot_listbox.current_selection))
+        self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID())
 
     def loadNewLot(self):
         self.parkingspot_listbox.reset()

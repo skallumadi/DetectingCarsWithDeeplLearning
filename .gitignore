@@ -1,4 +1,4 @@
 *.pyc
 *.iml
-modules.xml
+code/.idea/modules.xml
 workspace.xml
