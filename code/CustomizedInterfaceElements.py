@@ -1,4 +1,5 @@
 import Tkinter as tk
+import tkFileDialog
 import cv2
 from PIL import Image, ImageTk  # imagetk needed to be installed manually. pip install Pillow
 import numpy as np
@@ -194,3 +195,37 @@ class NameEntryPopup:
     def submit(self, events=None):
         self.PKListbox.parkinglot.getSingleSpot(self.PKListbox.getSelectionID()).id = self.entry.get()
         self.top.destroy()
+
+class MenuBar(tk.Menu):
+    def __init__(self, parent):
+        self.parent = parent
+        tk.Menu.__init__(self, self.parent)
+
+        self.add_command(label="Open ParkingLot", command=self.openFile)
+        self.add_command(label="Save ParkingLot", command=self.saveLot)
+        self.add_command(label="Quit", command=self.exitProgram)
+
+        self.lastFileUsage = ""
+
+    def openFile(self):
+        filename = tkFileDialog.askopenfile(parent=self.parent)
+        if filename is not None:
+            self.lastFileUsage = filename
+            try:
+                self.parent.parkinglot.loadXML(filename)
+            except (SyntaxError, AttributeError) as e:
+                print "Improper File"
+                pass
+        else:
+            pass
+
+    def saveLot(self):
+        filename = tkFileDialog.asksaveasfile(parent=self.parent)
+        if filename is not None:
+            self.lastFileUsage = filename
+            self.parent.parkinglot.saveXML(self.lastFileUsage)
+        else:
+            pass
+
+    def exitProgram(self):
+        self.parent.window.destroy()

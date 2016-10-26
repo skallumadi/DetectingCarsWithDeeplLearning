@@ -46,25 +46,21 @@ class SetupApp(tk.Frame):
         self.parkingspot_listbox = SpotList(self, self.parkinglot, width=20, height=37)
         self.parkingspot_listbox.grid(row=0, column=1, rowspan=3, sticky='N')
 
-        # Information Labels (taken out because currently useless)
-        #self.numMonitoredSpotsLabel = tk.Label(self.window, text='Monitored')
-        #self.numOccupiedSpotsLabel = tk.Label(self.window, text='Occupied')
-        #self.numVacantSpotsLabel = tk.Label(self.window, text='Vacant')
+        # MenuBar
+        self.menubar = MenuBar(self)
+        self.window.configure(menu=self.menubar)
 
-        #self.numMonitoredSpotsLabel.grid(row=1, column=0, sticky='W')
-        #self.numOccupiedSpotsLabel.grid(row=2, column=0, sticky='W')
-        #self.numVacantSpotsLabel.grid(row=3, column=0, sticky='W')
 
         # exit button
-        self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
-        self.exitButton.grid(row=5, column=1, sticky='E')
+        #self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
+        #self.exitButton.grid(row=5, column=1, sticky='E')
 
         # test save and load file buttons
-        self.saveXMLButton = tk.Button(self, text='Save Lot', command=self.parkinglot.saveXML)
-        self.saveXMLButton.grid(row=6, column=1, sticky='E')
+        #self.saveXMLButton = tk.Button(self, text='Save Lot', command=self.parkinglot.saveXML)
+        #self.saveXMLButton.grid(row=6, column=1, sticky='E')
 
-        self.loadXMLButton = tk.Button(self, text='Load Lot', command=self.loadNewLot)
-        self.loadXMLButton.grid(row=7, column=1, sticky='E')
+        #self.loadXMLButton = tk.Button(self, text='Load Lot', command=self.loadNewLot)
+        #self.loadXMLButton.grid(row=7, column=1, sticky='E')
 
         # delete spot button
         self.deleteSpotButton = tk.Button(self, text='Delete Selected', command=self.deleteSelection)
@@ -78,9 +74,9 @@ class SetupApp(tk.Frame):
     def deleteSelection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID())
 
-    def loadNewLot(self):
-        self.parkingspot_listbox.reset()
-        self.parkinglot.loadXML()
+    #def loadNewLot(self):
+    #    self.parkingspot_listbox.reset()
+    #    self.parkinglot.loadXML('testxml.xml')
 
 
     def window_exit(self, event):
