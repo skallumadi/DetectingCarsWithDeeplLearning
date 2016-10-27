@@ -4,7 +4,6 @@ import xml.etree.ElementTree as ET
 
 class ParkingLot:
     def __init__(self, path=None):
-        self.infoPath = ""  # xml file location for parking spots
         self.spotIDCounter = 0  # how many spots are on record
         self.numOccupied = 0
         self.numVacant = 0
@@ -19,20 +18,20 @@ class ParkingLot:
         else:
             self.infoPath = 'testxml.xml'
 
-    def loadXML(self):
+    def loadXML(self, filename):
         """ load xml file and put information in the right places.
             number of spots, initialize parking spots list.
         """
         self.parkingSpots = []
 
-        tree = ET.ElementTree(file=self.infoPath)
+        tree = ET.ElementTree(file=filename)
         self.spotIDCounter = int(next(tree.iter(tag='NextAvailableID')).attrib['counter'])
         for elem in tree.iter(tag='Spot'):
             loc = elem.attrib['location']
             idNumber = elem.attrib['id']
             self.addSpot([int(x) for x in loc.split()], idNumber)
 
-    def saveXML(self):
+    def saveXML(self, filename):
         """ save the current list of parking spaces.
         """
         root = ET.Element('root')
@@ -43,7 +42,7 @@ class ParkingLot:
             ET.SubElement(pklot, 'Spot', id=str(spot.id), location=' '.join(str(x) for x in spot.location))
 
         tree = ET.ElementTree(root)
-        tree.write(self.infoPath)
+        tree.write(filename)
 
     def saveUsage(self, filePath):
         """ save current lot information to separate file.
