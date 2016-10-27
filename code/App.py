@@ -90,16 +90,10 @@ class SetupApp(tk.Frame):
         listpos = self.parkingspot_listbox.current_selection
         idNumber = self.parkingspot_listbox.getSelectionID()
 
-        try:  # long af
-            self.canvas.highlightedLotLocation = self.parkinglot.getSingleSpot(idNumber).location
-            #print "Found"
+        try:  # try to set the highlighted spot, unless it doesnt exist
+            self.canvas.highlightedSpot = self.parkinglot.getSingleSpot(idNumber)
         except (IndexError, AttributeError) as e:
-            self.canvas.highlightedLotLocation = [0,0,0,0,0,0,0,0]
-
-            #print "NotFound"
-            #print listpos
-            #print idNumber
-            #print self.canvas.highlightedLotLocation
+            pass
 
         self.canvas.update_all()
 
@@ -139,7 +133,6 @@ class MonitorApp(tk.Frame):
 
 
 if __name__ == "__main__":
-
     image_path = "Parking-Lot.jpg"
     try:
         assert os.path.isfile(image_path)
@@ -151,6 +144,12 @@ if __name__ == "__main__":
 
     #PKListbox = ParkingLot()  # eventually this will be from a saved file.
     #app = SetupApp(root, image_path, PKListbox)
-
-    app = RoleSelect(root)
+    
+    if len(sys.argv) == 1 or sys.argv[1] == 'role':
+        app = RoleSelect(root)
+    elif sys.argv[1] == 'setup':
+        app = SetupApp(root, image_path, ParkingLot())
+    else:
+        app = RoleSelect(root)
+        
     root.mainloop()

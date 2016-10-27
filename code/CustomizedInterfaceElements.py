@@ -4,6 +4,8 @@ import cv2
 from PIL import Image, ImageTk  # imagetk needed to be installed manually. pip install Pillow
 import numpy as np
 
+from Spot import Spot
+
 
 class CanvasArea(tk.Canvas):
     """ A canvas object that is to be used as the main display area in the app.
@@ -37,7 +39,7 @@ class CanvasArea(tk.Canvas):
         self.bind('<ButtonRelease-1>', self.update_all, add="+")
 
         self.current_points_list = []  # used for the box currently being drawn
-        self.highlightedLotLocation = [0, 1, 2, 3, 4, 5, 6, 7]
+        self.highlightedSpot = Spot('-1', [0,0,0,0,0,0,0,0])
 
     def load_cv2_image(self, path, dimensions):
         """ From the given path, load and resize a jpeg
@@ -101,12 +103,16 @@ class CanvasArea(tk.Canvas):
         self.delete('parkinglabel')
         for spot in self.parkinglot.getParkingSpots():
             self.create_polygon(spot.location, fill='', outline='lime', tags='parkingspot')
-            self.create_text(spot.location[0]-5, spot.location[1]-5, text=spot.id, tags='parkinglabel')
+            self.create_text(spot.location[0]+10, spot.location[1]+10, text=spot.id, tags='parkinglabel', fill='lime')
 
     def update_all(self, events=None):
         self.draw_rectangles()
         self.delete('highlight')
-        self.create_polygon(self.highlightedLotLocation, fill='', outline='white', tags='highlight', width=2)
+        try:
+            self.create_polygon(self.highlightedSpot.location, fill='', outline='white', tags='highlight', width=2)
+            self.create_text(self.highlightedSpot.location[0]+10, self.highlightedSpot.location[1]+10, text=self.highlightedSpot.id, tags='highlight', fill='red')
+        except AttributeError:
+            pass
 
 
 class SpotList(tk.Listbox):
