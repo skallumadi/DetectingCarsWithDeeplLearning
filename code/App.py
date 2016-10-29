@@ -1,10 +1,12 @@
-import os, sys, cv2
-import numpy as np
+import sys, imp, os
 import Tkinter as tk
 from CustomizedInterfaceElements import *
 
 from ParkingLot import *
-from ImageClassifier import *
+try:
+    from ImageClassifier import *
+except ImportError:
+    pass
 
 
 class RoleSelect(tk.Frame):
@@ -53,21 +55,14 @@ class SetupApp(tk.Frame):
         self.menubar = MenuBar(self)
         self.window.configure(menu=self.menubar)
 
-        #IMAGE PROCESSOR WOOOOO
-        self.image_processor = ImageProcessor('resources/test_cars.tar.gz', self.parkinglot)
-        self.process_button = tk.Button(self, text='Process', command=self.process_lot)
-        self.process_button.grid(row=5, column=1)
-
-        # exit button
-        #self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
-        #self.exitButton.grid(row=5, column=1, sticky='E')
-
-        # test save and load file buttons
-        #self.saveXMLButton = tk.Button(self, text='Save Lot', command=self.parkinglot.saveXML)
-        #self.saveXMLButton.grid(row=6, column=1, sticky='E')
-
-        #self.loadXMLButton = tk.Button(self, text='Load Lot', command=self.loadNewLot)
-        #self.loadXMLButton.grid(row=7, column=1, sticky='E')
+        # Image Processor
+        # Only include this stuff if the libraries for it exist
+        try:
+            self.image_processor = ImageProcessor('resources/test_cars.tar.gz', self.parkinglot)
+            self.process_button = tk.Button(self, text='Process', command=self.process_lot)
+            self.process_button.grid(row=5, column=1)
+        except NameError:
+            pass
 
         # delete spot button
         self.deleteSpotButton = tk.Button(self, text='Delete Selected', command=self.deleteSelection)
@@ -82,14 +77,8 @@ class SetupApp(tk.Frame):
         results = self.image_processor.get_results(self.image_path)
         print results
 
-
     def deleteSelection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID())
-
-    #def loadNewLot(self):
-    #    self.parkingspot_listbox.reset()
-    #    self.parkinglot.loadXML('testxml.xml')
-
 
     def window_exit(self, event):
         """ listen for program exit button
@@ -108,7 +97,6 @@ class SetupApp(tk.Frame):
             pass
 
         self.canvas.update_all()
-
         self.window.after(100, self.update_all)
 
 
@@ -123,14 +111,14 @@ class MonitorApp(tk.Frame):
         self.window.title("Display Area")
         self.window.configure(background='grey')
 
-        self.canvas = CanvasArea(self, self.parkinglot, image_path, (800, 600))
+        self.canvas = CanvasArea(self, self.parkinglot, image_path)
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
         # exit button
         self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
         self.exitButton.grid(row=1, column=1, sticky='E')
 
-        #bind events
+        # bind events
         self.window.bind('c', self.window_exit)
 
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
@@ -139,7 +127,6 @@ class MonitorApp(tk.Frame):
         self.window.destroy()
 
     def update_all(self):
-
         self.canvas.update_all()
         self.window.after(100, self.update_all)
 
@@ -153,9 +140,6 @@ if __name__ == "__main__":
         sys.exit()
 
     root = tk.Tk()
-
-    #PKListbox = ParkingLot()  # eventually this will be from a saved file.
-    #app = SetupApp(root, image_path, PKListbox)
     
     if len(sys.argv) == 1 or sys.argv[1] == 'role':
         app = RoleSelect(root)
