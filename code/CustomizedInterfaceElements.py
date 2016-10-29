@@ -101,7 +101,10 @@ class CanvasArea(tk.Canvas):
         self.delete('parkingspot')
         self.delete('parkinglabel')
         for spot in self.parkinglot.getParkingSpots():
-            self.create_polygon(spot.location, fill='', outline='lime', tags='parkingspot')
+            color = 'lime'
+            if spot.status == 'occupied':
+                color = 'red'
+            self.create_polygon(spot.location, fill='', outline=color, tags='parkingspot')
             self.create_text(spot.location[0]+10, spot.location[1]+10, text=spot.id, tags='parkinglabel', fill='lime')
 
     def update_all(self, events=None):

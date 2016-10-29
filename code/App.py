@@ -1,12 +1,10 @@
-import sys, imp, os
+import sys, os
 import Tkinter as tk
+import threading
+
 from CustomizedInterfaceElements import *
 
 from ParkingLot import *
-try:
-    from ImageClassifier import *
-except ImportError:
-    pass
 
 
 class RoleSelect(tk.Frame):
@@ -55,14 +53,10 @@ class SetupApp(tk.Frame):
         self.menubar = MenuBar(self)
         self.window.configure(menu=self.menubar)
 
-        # Image Processor
-        # Only include this stuff if the libraries for it exist
-        try:
-            self.image_processor = ImageProcessor('resources/test_cars.tar.gz', self.parkinglot)
-            self.process_button = tk.Button(self, text='Process', command=self.process_lot)
-            self.process_button.grid(row=5, column=1)
-        except NameError:
-            pass
+        # Image Processor/Parking lot update
+        self.lotupdate_button = tk.Button(self, text='Update Lot', command=self.update_lot)
+        self.lotupdate_button.grid(row=5, column=1)
+
 
         # delete spot button
         self.deleteSpotButton = tk.Button(self, text='Delete Selected', command=self.deleteSelection)
@@ -73,9 +67,19 @@ class SetupApp(tk.Frame):
 
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
 
-    def process_lot(self):
-        results = self.image_processor.get_results(self.image_path)
-        print results
+    def update_lot(self):
+        # there is absolutely no way this works as intended on first run. i refuse to believe it.
+        # there is a secret race condition or something will be corrupted or something.
+        # but it leaves the UI running while everything is going on, soooooooo.....
+
+        # was worried about stray threads piling up, but threading.enumerate seems to show that things clean up after
+        # themselves.
+
+        if threading.activeCount() > 1:
+            print 'Warning: Images have not finished processing from the last pass'
+            pass
+        else:
+            threading.Thread(target=self.parkinglot.update, args=[self.image_path]).start()
 
     def deleteSelection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID())
@@ -87,8 +91,6 @@ class SetupApp(tk.Frame):
 
     def update_all(self, event=None):
         self.parkingspot_listbox.update_parkingspot_list()
-
-        listpos = self.parkingspot_listbox.current_selection
         idNumber = self.parkingspot_listbox.getSelectionID()
 
         try:  # try to set the highlighted spot, unless it doesnt exist
