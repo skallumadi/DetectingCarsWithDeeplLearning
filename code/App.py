@@ -134,6 +134,11 @@ class MonitorApp(tk.Frame):
 
 
 if __name__ == "__main__":
+    try:
+        import caffe
+    except ImportError:
+        print "Warning: Could not locate installed Caffe, images will not be analyzed."
+
     image_path = "Parking-Lot.jpg"
     try:
         assert os.path.isfile(image_path)
