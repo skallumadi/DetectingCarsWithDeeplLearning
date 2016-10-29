@@ -30,27 +30,30 @@ class CanvasArea(tk.Canvas):
         tk.Canvas.__init__(self, master=window, width=self.dimensions[0], height=self.dimensions[1])
 
         self.tk_img = self.get_imageTK_obj(self.cv2_img)
-
         self.create_image(0, 0, image=self.tk_img, anchor=tk.NW)
         self.image = self.tk_img
 
-        # bind canvas events
-        # multiple functions can be bound to an event by using the 'add="+"' argument. TIL.
-        self.bind('<B1-Motion>', self.drawArea)
-        self.bind('<ButtonRelease-1>', self.createRectangle, add="+")
-        self.bind('<ButtonRelease-1>', self.update_all, add="+")
+
 
         self.current_points_list = []  # used for the box currently being drawn
-        self.highlightedSpot = Spot('-1', [0,0,0,0,0,0,0,0])
+        self.highlightedSpot = Spot('-1', [0, 0, 0, 0, 0, 0, 0, 0])
 
-    def load_cv2_image(self, path):
+        # bind canvas events
+        # multiple functions can be bound to an event by using the 'add="+"' argument. TIL.
+        self.bind('<B1-Motion>', self.draw_area)
+        self.bind('<ButtonRelease-1>', self.create_rectangle, add="+")
+        self.bind('<ButtonRelease-1>', self.update_all, add="+")
+
+    @staticmethod
+    def load_cv2_image(path):
         """ From the given path, load a jpeg
             and return a cv2 image object
         """
         img = cv2.imread(path)
         return img
 
-    def get_imageTK_obj(self, cv2Img):
+    @staticmethod
+    def get_imageTK_obj(cv2Img):
         """ from the given cv2 image, return a TKImage object for display
         """
         # the color channels need to be shuffled around due to differences between cv2 and tk
@@ -63,7 +66,7 @@ class CanvasArea(tk.Canvas):
         im_tk = ImageTk.PhotoImage(image=img)
         return im_tk
 
-    def drawArea(self, events):
+    def draw_area(self, events):
         """ create an area to turn into a rectangle, and draw points to show
             what is currently recorded
         """
@@ -71,7 +74,7 @@ class CanvasArea(tk.Canvas):
 
         self.create_oval(events.x - 1, events.y - 1, events.x + 1, events.y + 1, fill="yellow", tags='indicator')
 
-    def createRectangle(self, events):
+    def create_rectangle(self, events):
         """ creates a rectangle from the points stored in self.current_points_list
             using cv2 libraries.
             adds this rectangle as a new parking spot to self.PKListbox
@@ -133,9 +136,10 @@ class SpotList(tk.Listbox):
         # keep track of the length of the list, to use when updating
         self.current_length = 0
         self.current_selection = 0  # track current selection outside of default ANCHOR
+
         # bind list events
-        self.bind("<<ListboxSelect>>", self.onSelect)
-        self.bind("<Double-1>", self.onDoubleClick)
+        self.bind("<<ListboxSelect>>", self.on_select)
+        self.bind("<Double-1>", self.on_double_click)
 
     def update_parkingspot_list(self):
         """ Redraw the list from the current collection of parking spaces.
@@ -149,8 +153,6 @@ class SpotList(tk.Listbox):
 
         # update if a spot has been created
         # ugly but currently it works
-            #addendum: this used to only execute on changes, but it made problems with renaming spots. now its constant.
-            #if numParkingSpots != self.current_length: #old conditional check
         if numParkingSpots > self.current_length:
             self.current_selection = numParkingSpots - 1
 
@@ -168,15 +170,15 @@ class SpotList(tk.Listbox):
         self.selection_set(self.current_selection)
         self.activate(self.current_selection)
 
-    def onSelect(self, events):
+    def on_select(self, events):
         index = self.curselection()[0]
         self.current_selection = index
         self.update_parkingspot_list()
 
-    def onDoubleClick(self, events):
+    def on_double_click(self, events):
         pop = NameEntryPopup(self)
 
-    def getSelectionID(self):
+    def get_selection_id(self):
         return self.get(self.current_selection)
 
     def reset(self):
@@ -201,21 +203,22 @@ class NameEntryPopup:
         self.top.bind('<Return>', self.submit)
 
     def submit(self, events=None):
-        self.PKListbox.parkinglot.getSingleSpot(self.PKListbox.getSelectionID()).id = self.entry.get()
+        self.PKListbox.parkinglot.getSingleSpot(self.PKListbox.get_selection_id()).id = self.entry.get()
         self.top.destroy()
+
 
 class MenuBar(tk.Menu):
     def __init__(self, parent):
         self.parent = parent
         tk.Menu.__init__(self, self.parent)
 
-        self.add_command(label="Open ParkingLot", command=self.openFile)
-        self.add_command(label="Save ParkingLot", command=self.saveLot)
-        self.add_command(label="Quit", command=self.exitProgram)
+        self.add_command(label="Open ParkingLot", command=self.open_file)
+        self.add_command(label="Save ParkingLot", command=self.save_lot)
+        self.add_command(label="Quit", command=self.exit_program)
 
         self.lastFileUsage = ""
 
-    def openFile(self):
+    def open_file(self):
         filename = tkFileDialog.askopenfile(parent=self.parent)
         if filename is not None:
             self.lastFileUsage = filename
@@ -227,13 +230,13 @@ class MenuBar(tk.Menu):
         else:
             pass
 
-    def saveLot(self):
+    def save_lot(self):
         filename = tkFileDialog.asksaveasfile(parent=self.parent)
-        if filename is not None:
-            self.lastFileUsage = filename
-            self.parent.parkinglot.saveXML(self.lastFileUsage)
-        else:
+        if filename is None:
             pass
 
-    def exitProgram(self):
+        self.lastFileUsage = filename
+        self.parent.parkinglot.saveXML(self.lastFileUsage)
+
+    def exit_program(self):
         self.parent.window.destroy()

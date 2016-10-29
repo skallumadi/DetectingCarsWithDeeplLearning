@@ -2,70 +2,67 @@ import sys, os
 import Tkinter as tk
 import threading
 
-from CustomizedInterfaceElements import *
-
+import CustomizedInterfaceElements as ui
 from ParkingLot import *
 
 
 class RoleSelect(tk.Frame):
     def __init__(self, parent):
-        tk.Frame.__init__(self, master=root)
-        self.pack()
-
         self.parent = parent
+        tk.Frame.__init__(self, master=self.parent)
 
-        self.selectSetupButton = tk.Button(self, text="Open Operator", command=self.startSetup)
-        self.selectMonitorButton = tk.Button(self, text="Open Monitor", command=self.startMonitor)
+        self.selectSetupButton = tk.Button(self, text="Open Operator", command=self.start_setup)
+        self.selectMonitorButton = tk.Button(self, text="Open Monitor", command=self.start_monitor)
         self.selectSetupButton.pack(side=tk.TOP)
         self.selectMonitorButton.pack()
 
-    def startSetup(self):
-        app = SetupApp(self.parent, "Parking-Lot.jpg", ParkingLot())
-        self.destroy()
+        self.pack()
 
-    def startMonitor(self):
-        app = MonitorApp(self.parent, "Parking-Lot.jpg", ParkingLot("testxml.xml"))
+    def start_setup(self):
         self.destroy()
+        app = SetupApp(self.parent, "Parking-Lot.jpg", ParkingLot())
+
+    def start_monitor(self):
+        self.destroy()
+        app = MonitorApp(self.parent, "Parking-Lot.jpg", ParkingLot("testxml.xml"))
 
 
 class SetupApp(tk.Frame):
-    def __init__(self, root, image_path, PKLot):
-        tk.Frame.__init__(self, master=root)
-        self.pack()
-
+    def __init__(self, parent, image_path, PKLot):
+        self.parent = parent
         self.parkinglot = PKLot
-
-        self.window = root
-        self.window.title("Display Area")
-        self.window.configure(background='grey')
-
         self.image_path = image_path
 
-        self.canvas = CanvasArea(self, self.parkinglot, image_path)
+        tk.Frame.__init__(self, master=self.parent)
+
+        self.winfo_toplevel().title('Setup')
+        self.winfo_toplevel().configure(background='grey')
+
+        self.canvas = ui.CanvasArea(self, self.parkinglot, image_path)
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
         # Parking Spot List
         # currently an issue with scrolling on the list. it will scroll and then immediately be set back to to 0.
-        self.parkingspot_listbox = SpotList(self, self.parkinglot, width=20, height=37)
+        self.parkingspot_listbox = ui.SpotList(self, self.parkinglot, width=20, height=34)
         self.parkingspot_listbox.grid(row=0, column=1, rowspan=3, sticky='N')
 
         # MenuBar
-        self.menubar = MenuBar(self)
-        self.window.configure(menu=self.menubar)
+        self.menubar = ui.MenuBar(self)
+        self.parent.configure(menu=self.menubar)
 
         # Image Processor/Parking lot update
         self.lotupdate_button = tk.Button(self, text='Update Lot', command=self.update_lot)
-        self.lotupdate_button.grid(row=5, column=1)
-
+        self.lotupdate_button.grid(row=5, column=1, sticky='E')
 
         # delete spot button
-        self.deleteSpotButton = tk.Button(self, text='Delete Selected', command=self.deleteSelection)
+        self.deleteSpotButton = tk.Button(self, text='Delete Selected', command=self.delete_selection)
         self.deleteSpotButton.grid(row=8, column=1, sticky='E')
 
-        # bind root events
-        self.window.bind('c', self.window_exit)
-
+        # bind events
+        self.parent.bind('c', self.window_exit)
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
+
+        self.pack()
 
     def update_lot(self):
         # there is absolutely no way this works as intended on first run. i refuse to believe it.
@@ -76,61 +73,59 @@ class SetupApp(tk.Frame):
         # themselves.
 
         if threading.activeCount() > 1:
-            print 'Warning: Images have not finished processing from the last pass'
+            print 'Warning: Images have not finished processing from the last iteration'
             pass
         else:
             threading.Thread(target=self.parkinglot.update, args=[self.image_path]).start()
 
-    def deleteSelection(self):
-        self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID())
+    def delete_selection(self):
+        self.parkinglot.removeSpot(self.parkingspot_listbox.get_selection_id())
 
-    def window_exit(self, event):
-        """ listen for program exit button
-        """
-        self.window.destroy()
+    def window_exit(self, event=None):
+        self.parent.destroy()
 
     def update_all(self, event=None):
         self.parkingspot_listbox.update_parkingspot_list()
-        idNumber = self.parkingspot_listbox.getSelectionID()
+        id_number = self.parkingspot_listbox.get_selection_id()
 
         try:  # try to set the highlighted spot, unless it doesnt exist
-            self.canvas.highlightedSpot = self.parkinglot.getSingleSpot(idNumber)
+            self.canvas.highlightedSpot = self.parkinglot.getSingleSpot(id_number)
         except (IndexError, AttributeError) as e:
             pass
 
         self.canvas.update_all()
-        self.window.after(100, self.update_all)
+        self.parent.after(100, self.update_all)
 
 
 class MonitorApp(tk.Frame):
-    def __init__(self, root, imagePath, PKLot):
-        tk.Frame.__init__(self, master=root)
-        self.pack()
-
+    def __init__(self, parent, imagePath, PKLot):
         self.parkinglot = PKLot
+        self.parent = parent
 
-        self.window = root
-        self.window.title("Display Area")
-        self.window.configure(background='grey')
+        tk.Frame.__init__(self, master=parent)
 
-        self.canvas = CanvasArea(self, self.parkinglot, image_path)
+        self.winfo_toplevel().title("Display Area")
+        self.winfo_toplevel().configure(background='grey')
+
+        self.canvas = ui.CanvasArea(self, self.parkinglot, image_path)
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
         # exit button
-        self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
+        self.exitButton = tk.Button(self, text='Quit', command=self.parent.destroy)
         self.exitButton.grid(row=1, column=1, sticky='E')
 
         # bind events
-        self.window.bind('c', self.window_exit)
-
+        self.parent.bind('c', self.window_exit)
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
 
+        self.pack()
+
     def window_exit(self):
-        self.window.destroy()
+        self.parent.destroy()
 
     def update_all(self):
         self.canvas.update_all()
-        self.window.after(100, self.update_all)
+        self.parent.after(100, self.update_all)
 
 
 if __name__ == "__main__":
@@ -156,7 +151,7 @@ if __name__ == "__main__":
         pklot = ParkingLot()
         pklot.loadXML('testxml.xml')
 
-        imp = ImageProcessor('model_8', 'model.caffemodel', pklot)
+        imp = ImageProcessor('model_8.tar.gz', pklot)
         imp.get_results('Parking-Lot.jpg')
 
         os.sys.exit(0)

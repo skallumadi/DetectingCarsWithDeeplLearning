@@ -27,7 +27,7 @@ class ParkingLot:
 
         if path:
             self.infoPath = path
-            self.loadXML()
+            self.loadXML(self.infoPath)
         else:
             self.infoPath = 'testxml.xml'
 

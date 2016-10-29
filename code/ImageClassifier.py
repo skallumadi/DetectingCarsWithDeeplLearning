@@ -1,24 +1,19 @@
 #  this is a very slightly modified version of the example code that was pulled from the nvidia digits files
-import os
-import cv2
-import PIL.Image
+import os, time
+import tarfile, tempfile, zipfile
+import cv2, PIL.Image
 import scipy.misc
 import numpy as np
-import time
 from google.protobuf import text_format
 
 os.environ['GLOG_minloglevel'] = '2'  # suppress caffe output  # must be done before importing caffe
 import caffe
 from caffe.proto import caffe_pb2
 
-import tarfile
-import tempfile
-import zipfile
-
 
 class ImageClassify:
     def __init__(self, archive_path):
-        self.archive_path=archive_path
+        self.archive_path = archive_path
 
     def get_net(self, caffemodel, deploy_file, use_gpu=True):
         """
@@ -37,7 +32,8 @@ class ImageClassify:
         # load a new model
         return caffe.Net(deploy_file, caffemodel, caffe.TEST)
 
-    def get_transformer(self, deploy_file, mean_file=None):
+    @staticmethod
+    def get_transformer(deploy_file, mean_file=None):
         """
         Returns an instance of caffe.io.Transformer
 
@@ -84,7 +80,8 @@ class ImageClassify:
 
         return t
 
-    def load_image(self, path, height, width, mode='RGB'):
+    @staticmethod
+    def load_image(path, height, width, mode='RGB'):
         """
         Load an image from disk
 
@@ -106,7 +103,8 @@ class ImageClassify:
         image = scipy.misc.imresize(image, (height, width), 'bilinear')
         return image
 
-    def forward_pass(self, images, net, transformer, batch_size=None):
+    @staticmethod
+    def forward_pass(images, net, transformer, batch_size=None):
         """
         Returns scores for each image as an np.ndarray (nImages x nClasses)
 
@@ -150,7 +148,8 @@ class ImageClassify:
 
         return scores
 
-    def read_labels(self, labels_file):
+    @staticmethod
+    def read_labels(labels_file):
         """
         Returns a list of strings
 
@@ -202,8 +201,7 @@ class ImageClassify:
         # Classify the image
         scores = self.forward_pass(images, net, transformer, batch_size=batch_size)
 
-        ### Process the results
-
+        # Process the results
         indices = (-scores).argsort()[:, :5]  # take top 5 results
         classifications = []
         for image_index, index_list in enumerate(indices):
@@ -222,7 +220,8 @@ class ImageClassify:
         # for use elsewhere in the program
         return classifications
 
-    def unzip_archive(self, archive):
+    @staticmethod
+    def unzip_archive(archive):
         """
         Unzips an archive into a temporary directory
         Returns a link to that directory
@@ -276,8 +275,8 @@ class ImageClassify:
         assert deploy_file is not None, 'Deploy file not found'
 
         return self.classify(caffemodel, deploy_file, image_files,
-                        mean_file=mean_file, labels_file=labels_file,
-                        batch_size=batch_size, use_gpu=use_gpu)
+                             mean_file=mean_file, labels_file=labels_file,
+                             batch_size=batch_size, use_gpu=use_gpu)
 
 
 class ImageProcessor:
@@ -285,35 +284,36 @@ class ImageProcessor:
         self.classifier = ImageClassify(networkArchive)
         self.parkinglot = parkingLot
 
-    def divideImage(self, imagepath):
+    def divide_image(self, imagepath):
         """Gets a list of parking spot ids and their specific sections of the given image.
            Then saves all images to a folder, named after their ID
         """
 
-        image = cv2.imread(imagepath)
+        img = cv2.imread(imagepath)
         # [ [id, location], [id, location], ... ]
         infolist = zip([x.id for x in self.parkinglot.getParkingSpots()],
                        [x.location for x in self.parkinglot.getParkingSpots()])
         # [ [id, image], [id, image], ... ]
-        cropped_images = [[str(x[0]), self.get_subimage(image, x[1])] for x in infolist]
+        cropped_images = [[str(x[0]), self.get_subimage(img, x[1])] for x in infolist]
 
         # must delete all images every time you write the list, or some changes will not be accurately shown
-        for file in os.listdir('cropped_images/'):
-            os.remove('cropped_images/' + file)
+        for filename in os.listdir('cropped_images/'):
+            os.remove('cropped_images/' + filename)
         for img in cropped_images:
             cv2.imwrite('cropped_images/' + img[0] + '.jpg', img[1])
 
-    def get_subimage(self, image, location):
-        ''' Returns a cv2 image.
+    @staticmethod
+    def get_subimage(img, location):
+        """ Returns a cv2 image.
             The image is rotated and cropped based on the given location
-        '''
-        image_size = (len(image), len(image[0]))
+        """
+        image_size = (len(img), len(img[0]))
 
         # need to get the stored location list into something more typical.
         # so from [x,y,x,y,...] to [[x,y],[x,y],...]
         loc_list = []
         for i in range(0, 8, 2):
-            loc_list.append([location[i], location[i+1]])
+            loc_list.append([location[i], location[i + 1]])
         numpy_loc = np.array(loc_list)
 
         # rotated rectangles are the way to go here, which this is.
@@ -334,7 +334,7 @@ class ImageProcessor:
         m = cv2.getRotationMatrix2D(center, angle, 1.0)
         # for some reason the size of this needs to cover the area of the original box. so the size of original image
         # update, i have no idea, but a large size fixes it. so i just made it larger than it could ever need to be
-        rotated = cv2.warpAffine(image, m, (image_size[0]+500, image_size[1] + 500))
+        rotated = cv2.warpAffine(img, m, (image_size[0] + 500, image_size[1] + 500))
         cropped = cv2.getRectSubPix(rotated, (int(size[0]), int(size[1])), (center[0], center[1]))
 
         return cropped
@@ -344,7 +344,7 @@ class ImageProcessor:
               [[id, [(Label, confidence)]
               now revised to [[id, most likely label], ...]
         """
-        self.divideImage(image_path)
+        self.divide_image(image_path)
         image_names = os.listdir('cropped_images/')
         # no parking spots = crashing, so handle it
         if not image_names:
@@ -367,6 +367,7 @@ class ImageProcessor:
 
         results = zip(ids, winning_labels)
         return results
+
 
 if __name__ == '__main__':
     path = '/home/alloba/Trained_Models/test_cars_model_8/'
