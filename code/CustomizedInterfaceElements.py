@@ -19,14 +19,16 @@ class CanvasArea(tk.Canvas):
             to keep in the main class, and separating it would be of benefit.
     """
 
-    def __init__(self, window, parkinglot, imgpath, dimensions):
-        tk.Canvas.__init__(self, master=window, width=dimensions[0], height=dimensions[1])
-
+    def __init__(self, window, parkinglot, imgpath):
         self.window = window
-        self.dimensions = dimensions
         self.parkinglot = parkinglot
 
-        self.cv2_img = self.load_cv2_image(imgpath, self.dimensions)
+        self.cv2_img = self.load_cv2_image(imgpath)
+        width, height, _ = self.cv2_img.shape
+        self.dimensions = (height, width)
+
+        tk.Canvas.__init__(self, master=window, width=self.dimensions[0], height=self.dimensions[1])
+
         self.tk_img = self.get_imageTK_obj(self.cv2_img)
 
         self.create_image(0, 0, image=self.tk_img, anchor=tk.NW)
@@ -41,14 +43,11 @@ class CanvasArea(tk.Canvas):
         self.current_points_list = []  # used for the box currently being drawn
         self.highlightedSpot = Spot('-1', [0,0,0,0,0,0,0,0])
 
-    def load_cv2_image(self, path, dimensions):
-        """ From the given path, load and resize a jpeg
+    def load_cv2_image(self, path):
+        """ From the given path, load a jpeg
             and return a cv2 image object
         """
-        if not dimensions:
-            raise Exception("Must provide height and width as tuple")
         img = cv2.imread(path)
-        img = cv2.resize(img, dimensions, interpolation=cv2.INTER_CUBIC)
         return img
 
     def get_imageTK_obj(self, cv2Img):

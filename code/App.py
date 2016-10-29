@@ -4,6 +4,7 @@ import Tkinter as tk
 from CustomizedInterfaceElements import *
 
 from ParkingLot import *
+from ImageClassifier import *
 
 
 class RoleSelect(tk.Frame):
@@ -38,7 +39,9 @@ class SetupApp(tk.Frame):
         self.window.title("Display Area")
         self.window.configure(background='grey')
 
-        self.canvas = CanvasArea(self, self.parkinglot, image_path, (800, 600))
+        self.image_path = image_path
+
+        self.canvas = CanvasArea(self, self.parkinglot, image_path)
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
         # Parking Spot List
@@ -50,6 +53,10 @@ class SetupApp(tk.Frame):
         self.menubar = MenuBar(self)
         self.window.configure(menu=self.menubar)
 
+        #IMAGE PROCESSOR WOOOOO
+        self.image_processor = ImageProcessor('resources/test_cars.tar.gz', self.parkinglot)
+        self.process_button = tk.Button(self, text='Process', command=self.process_lot)
+        self.process_button.grid(row=5, column=1)
 
         # exit button
         #self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
@@ -70,6 +77,11 @@ class SetupApp(tk.Frame):
         self.window.bind('c', self.window_exit)
 
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
+
+    def process_lot(self):
+        results = self.image_processor.get_results(self.image_path)
+        print results
+
 
     def deleteSelection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID())
@@ -149,6 +161,15 @@ if __name__ == "__main__":
         app = RoleSelect(root)
     elif sys.argv[1] == 'setup':
         app = SetupApp(root, image_path, ParkingLot())
+    elif sys.argv[1] == 'imtest':
+        pklot = ParkingLot()
+        pklot.loadXML('testxml.xml')
+
+        imp = ImageProcessor('model_8', 'model.caffemodel', pklot)
+        imp.get_results('Parking-Lot.jpg')
+
+        os.sys.exit(0)
+
     else:
         app = RoleSelect(root)
         
