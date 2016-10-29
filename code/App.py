@@ -1,6 +1,7 @@
-import os, sys, cv2
-import numpy as np
+import sys, os
 import Tkinter as tk
+import threading
+
 from CustomizedInterfaceElements import *
 
 from ParkingLot import *
@@ -38,7 +39,9 @@ class SetupApp(tk.Frame):
         self.window.title("Display Area")
         self.window.configure(background='grey')
 
-        self.canvas = CanvasArea(self, self.parkinglot, image_path, (800, 600))
+        self.image_path = image_path
+
+        self.canvas = CanvasArea(self, self.parkinglot, image_path)
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
         # Parking Spot List
@@ -50,17 +53,10 @@ class SetupApp(tk.Frame):
         self.menubar = MenuBar(self)
         self.window.configure(menu=self.menubar)
 
+        # Image Processor/Parking lot update
+        self.lotupdate_button = tk.Button(self, text='Update Lot', command=self.update_lot)
+        self.lotupdate_button.grid(row=5, column=1)
 
-        # exit button
-        #self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
-        #self.exitButton.grid(row=5, column=1, sticky='E')
-
-        # test save and load file buttons
-        #self.saveXMLButton = tk.Button(self, text='Save Lot', command=self.parkinglot.saveXML)
-        #self.saveXMLButton.grid(row=6, column=1, sticky='E')
-
-        #self.loadXMLButton = tk.Button(self, text='Load Lot', command=self.loadNewLot)
-        #self.loadXMLButton.grid(row=7, column=1, sticky='E')
 
         # delete spot button
         self.deleteSpotButton = tk.Button(self, text='Delete Selected', command=self.deleteSelection)
@@ -71,13 +67,22 @@ class SetupApp(tk.Frame):
 
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
 
+    def update_lot(self):
+        # there is absolutely no way this works as intended on first run. i refuse to believe it.
+        # there is a secret race condition or something will be corrupted or something.
+        # but it leaves the UI running while everything is going on, soooooooo.....
+
+        # was worried about stray threads piling up, but threading.enumerate seems to show that things clean up after
+        # themselves.
+
+        if threading.activeCount() > 1:
+            print 'Warning: Images have not finished processing from the last pass'
+            pass
+        else:
+            threading.Thread(target=self.parkinglot.update, args=[self.image_path]).start()
+
     def deleteSelection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.getSelectionID())
-
-    #def loadNewLot(self):
-    #    self.parkingspot_listbox.reset()
-    #    self.parkinglot.loadXML('testxml.xml')
-
 
     def window_exit(self, event):
         """ listen for program exit button
@@ -86,8 +91,6 @@ class SetupApp(tk.Frame):
 
     def update_all(self, event=None):
         self.parkingspot_listbox.update_parkingspot_list()
-
-        listpos = self.parkingspot_listbox.current_selection
         idNumber = self.parkingspot_listbox.getSelectionID()
 
         try:  # try to set the highlighted spot, unless it doesnt exist
@@ -96,7 +99,6 @@ class SetupApp(tk.Frame):
             pass
 
         self.canvas.update_all()
-
         self.window.after(100, self.update_all)
 
 
@@ -111,14 +113,14 @@ class MonitorApp(tk.Frame):
         self.window.title("Display Area")
         self.window.configure(background='grey')
 
-        self.canvas = CanvasArea(self, self.parkinglot, image_path, (800, 600))
+        self.canvas = CanvasArea(self, self.parkinglot, image_path)
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
         # exit button
         self.exitButton = tk.Button(self, text='Quit', command=self.window.destroy)
         self.exitButton.grid(row=1, column=1, sticky='E')
 
-        #bind events
+        # bind events
         self.window.bind('c', self.window_exit)
 
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
@@ -127,12 +129,16 @@ class MonitorApp(tk.Frame):
         self.window.destroy()
 
     def update_all(self):
-
         self.canvas.update_all()
         self.window.after(100, self.update_all)
 
 
 if __name__ == "__main__":
+    try:
+        import caffe
+    except ImportError:
+        print "Warning: Could not locate installed Caffe, images will not be analyzed."
+
     image_path = "Parking-Lot.jpg"
     try:
         assert os.path.isfile(image_path)
@@ -141,14 +147,20 @@ if __name__ == "__main__":
         sys.exit()
 
     root = tk.Tk()
-
-    #PKListbox = ParkingLot()  # eventually this will be from a saved file.
-    #app = SetupApp(root, image_path, PKListbox)
     
     if len(sys.argv) == 1 or sys.argv[1] == 'role':
         app = RoleSelect(root)
     elif sys.argv[1] == 'setup':
         app = SetupApp(root, image_path, ParkingLot())
+    elif sys.argv[1] == 'imtest':
+        pklot = ParkingLot()
+        pklot.loadXML('testxml.xml')
+
+        imp = ImageProcessor('model_8', 'model.caffemodel', pklot)
+        imp.get_results('Parking-Lot.jpg')
+
+        os.sys.exit(0)
+
     else:
         app = RoleSelect(root)
         
