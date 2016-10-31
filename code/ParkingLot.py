@@ -21,6 +21,7 @@ class ParkingLot:
             self.imageprocessor = ImageProcessor('resources/test_cars.tar.gz', self)
         except NameError:
             self.imageprocessor = None
+            print "tar.gz file of network not found in 'resources/'"
 
         # self.currentLotImage = #the most recent image for the parking lot
         # self.imageClassifier = #link to image classifier object to process images
@@ -29,7 +30,7 @@ class ParkingLot:
             self.infoPath = path
             self.loadXML(self.infoPath)
         else:
-            self.infoPath = 'testxml.xml'
+            pass
 
     def loadXML(self, filename):
         """ load xml file and put information in the right places.

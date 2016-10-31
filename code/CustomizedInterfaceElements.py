@@ -214,6 +214,7 @@ class MenuBar(tk.Menu):
 
         self.add_command(label="Open ParkingLot", command=self.open_file)
         self.add_command(label="Save ParkingLot", command=self.save_lot)
+        self.add_command(label="Role Select", command=self.return_roleselect)
         self.add_command(label="Quit", command=self.exit_program)
 
         self.lastFileUsage = ""
@@ -238,5 +239,9 @@ class MenuBar(tk.Menu):
         self.lastFileUsage = filename
         self.parent.parkinglot.saveXML(self.lastFileUsage)
 
+    def return_roleselect(self):
+        self.parent.return_roleselect()
+
     def exit_program(self):
-        self.parent.window.destroy()
+        # why does this work better than wget_toplevel.destroy()?
+        self.parent.parent.destroy()
