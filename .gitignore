@@ -2,4 +2,4 @@
 *.iml
 code/.idea/modules.xml
 workspace.xml
-cropped_images/*.jpg
+cropped_images/*
