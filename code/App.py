@@ -1,7 +1,7 @@
 import sys, os
 import Tkinter as tk
 import threading
-
+import PIL.Image
 import CustomizedInterfaceElements as ui
 from ParkingLot import *
 import ImageTk
@@ -12,15 +12,18 @@ class RoleSelect(tk.Frame):
         self.parent = parent
         tk.Frame.__init__(self, master=self.parent)
 
+        # add a label with the project logo
+        # separate operations on loading the image because anti aliasing didn't work otherwise
+        pilimage = PIL.Image.open('resources/Logo-WhiteBG.png')
+        resized = pilimage.resize([784, 412], PIL.Image.ANTIALIAS)
+        self.img = ImageTk.PhotoImage(resized)
+        self.panel = tk.Label(self, image=self.img)
+        self.panel.pack(side=tk.TOP, fill='both')
+
         self.selectSetupButton = tk.Button(self, text="Open Operator", command=self.start_setup)
         self.selectMonitorButton = tk.Button(self, text="Open Monitor", command=self.start_monitor)
-        self.selectSetupButton.pack(side=tk.TOP)
-        self.selectMonitorButton.pack()
-
-        # add a canvas with the project logo
-        self.img = ImageTk.PhotoImage(PIL.Image.open('resources/Logo-WhiteBG.png').resize([392, 206]))
-        self.panel = tk.Label(self, image=self.img)
-        self.panel.pack(side='bottom', fill='both')
+        self.selectSetupButton.pack(side=tk.RIGHT)
+        self.selectMonitorButton.pack(side=tk.RIGHT)
 
         self.pack()
 
