@@ -1,9 +1,10 @@
 import sys, os
 import Tkinter as tk
 import threading
-
+import PIL.Image
 import CustomizedInterfaceElements as ui
 from ParkingLot import *
+import ImageTk
 
 
 class RoleSelect(tk.Frame):
@@ -11,20 +12,28 @@ class RoleSelect(tk.Frame):
         self.parent = parent
         tk.Frame.__init__(self, master=self.parent)
 
+        # add a label with the project logo
+        # separate operations on loading the image because anti aliasing didn't work otherwise
+        pilimage = PIL.Image.open('resources/Logo-WhiteBG.png')
+        resized = pilimage.resize([784, 412], PIL.Image.ANTIALIAS)
+        self.img = ImageTk.PhotoImage(resized)
+        self.panel = tk.Label(self, image=self.img)
+        self.panel.pack(side=tk.TOP, fill='both')
+
         self.selectSetupButton = tk.Button(self, text="Open Operator", command=self.start_setup)
         self.selectMonitorButton = tk.Button(self, text="Open Monitor", command=self.start_monitor)
-        self.selectSetupButton.pack(side=tk.TOP)
-        self.selectMonitorButton.pack()
+        self.selectSetupButton.pack(side=tk.RIGHT)
+        self.selectMonitorButton.pack(side=tk.RIGHT)
 
         self.pack()
 
     def start_setup(self):
         self.destroy()
-        app = SetupApp(self.parent, "Parking-Lot.jpg", ParkingLot())
+        app = SetupApp(self.parent, "resources/Parking-Lot.jpg", ParkingLot())
 
     def start_monitor(self):
         self.destroy()
-        app = MonitorApp(self.parent, "Parking-Lot.jpg", ParkingLot("testxml.xml"))
+        app = MonitorApp(self.parent, "resources/Parking-Lot.jpg", ParkingLot())
 
 
 class SetupApp(tk.Frame):
@@ -84,6 +93,10 @@ class SetupApp(tk.Frame):
     def window_exit(self, event=None):
         self.parent.destroy()
 
+    def return_roleselect(self):
+        self.destroy()
+        app=RoleSelect(self.parent)
+
     def update_all(self, event=None):
         self.parkingspot_listbox.update_parkingspot_list()
         id_number = self.parkingspot_listbox.get_selection_id()
@@ -97,35 +110,20 @@ class SetupApp(tk.Frame):
         self.parent.after(100, self.update_all)
 
 
-class MonitorApp(tk.Frame):
+class MonitorApp(SetupApp):
+    # since this is just a version of SetupApp with functionality removed, then it can just inherit directly from it ez.
     def __init__(self, parent, imagePath, PKLot):
-        self.parkinglot = PKLot
-        self.parent = parent
+        SetupApp.__init__(self, parent, imagePath, PKLot)
 
-        tk.Frame.__init__(self, master=parent)
+        # remove the ability for users to draw things in monitor mode
+        self.canvas.unbind('<B1-Motion>')
+        self.canvas.unbind('<ButtonRelease-1>')
 
-        self.winfo_toplevel().title("Display Area")
-        self.winfo_toplevel().configure(background='grey')
-
-        self.canvas = ui.CanvasArea(self, self.parkinglot, image_path)
-        self.canvas.grid(row=0, column=0, sticky=tk.N)
-
-        # exit button
-        self.exitButton = tk.Button(self, text='Quit', command=self.parent.destroy)
-        self.exitButton.grid(row=1, column=1, sticky='E')
-
-        # bind events
-        self.parent.bind('c', self.window_exit)
-        self.update_all()  # this kicks off the main root calling updates ever 100 ms
-
-        self.pack()
-
-    def window_exit(self):
-        self.parent.destroy()
-
-    def update_all(self):
-        self.canvas.update_all()
-        self.parent.after(100, self.update_all)
+        # remove delete button
+        self.deleteSpotButton.grid_forget()
+        
+        #remove save lot menuitem
+        self.menubar.delete(1)
 
 
 if __name__ == "__main__":
@@ -134,19 +132,11 @@ if __name__ == "__main__":
     except ImportError:
         print "Warning: Could not locate installed Caffe, images will not be analyzed."
 
-    image_path = "Parking-Lot.jpg"
-    try:
-        assert os.path.isfile(image_path)
-    except AssertionError:
-        print "ERROR: Invalid Image Path"
-        sys.exit()
-
     root = tk.Tk()
+    root.resizable(0, 0)
     
     if len(sys.argv) == 1 or sys.argv[1] == 'role':
         app = RoleSelect(root)
-    elif sys.argv[1] == 'setup':
-        app = SetupApp(root, image_path, ParkingLot())
     elif sys.argv[1] == 'imtest':
         pklot = ParkingLot()
         pklot.loadXML('testxml.xml')
