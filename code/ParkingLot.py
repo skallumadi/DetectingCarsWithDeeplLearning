@@ -14,7 +14,7 @@ class ParkingLot:
         self.numEmpty = 0
         self.parkingSpots = []  # a list of all the parking spots and status.
 
-        self.currentLotImage = ''
+        self.currentLotImage = 'resources/init.jpg'
 
         # only set up the processor if the system has libraries for it
         try:
@@ -118,11 +118,10 @@ class ParkingLot:
                 return
         raise Exception("No spot with given id " + str(ID) + " found.")
 
-    def update(self, imagepath):
+    def update(self):
         """ update the current information for this parking lot.
             the image given is expected to be the most recent image for the lot.
         """
-        self.currentLotImage = imagepath
         if self.imageprocessor is None:
             return
 

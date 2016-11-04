@@ -22,7 +22,6 @@ class CanvasArea(tk.Canvas):
     def __init__(self, window, parkinglot, imgpath):
         self.window = window
         self.parkinglot = parkinglot
-
         self.cv2_img = self.load_cv2_image(imgpath)
         width, height, _ = self.cv2_img.shape
         self.dimensions = (height, width)
@@ -33,11 +32,8 @@ class CanvasArea(tk.Canvas):
         self.create_image(0, 0, image=self.tk_img, anchor=tk.NW)
         self.image = self.tk_img
 
-
-
         self.current_points_list = []  # used for the box currently being drawn
         self.highlightedSpot = Spot('-1', [0, 0, 0, 0, 0, 0, 0, 0])
-
         # bind canvas events
         # multiple functions can be bound to an event by using the 'add="+"' argument. TIL.
         self.bind('<B1-Motion>', self.draw_area)
@@ -109,6 +105,15 @@ class CanvasArea(tk.Canvas):
                 color = 'red'
             self.create_polygon(spot.location, fill='', outline=color, tags='parkingspot')
             self.create_text(spot.location[0]+10, spot.location[1]+10, text=spot.id, tags='parkinglabel', fill='lime')
+
+    def update_image(self):
+        self.cv2_img = self.load_cv2_image(self.parkinglot.currentLotImage)
+        width, height, _ = self.cv2_img.shape
+        self.dimensions = (height, width)
+
+        self.tk_img = self.get_imageTK_obj(self.cv2_img)
+        self.create_image(0,0, image=self.tk_img, anchor = tk.NW)
+        self.image = self.tk_img
 
     def update_all(self, events=None):
         self.draw_rectangles()

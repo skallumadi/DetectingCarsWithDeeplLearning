@@ -1,11 +1,14 @@
 import sys, os
 import Tkinter as tk
+import tkFileDialog
 import threading
 import PIL.Image
 import CustomizedInterfaceElements as ui
 from ParkingLot import *
-import ImageTk
+from PIL import ImageTk
 
+import time
+import datetime
 
 class RoleSelect(tk.Frame):
     def __init__(self, parent):
@@ -29,11 +32,11 @@ class RoleSelect(tk.Frame):
 
     def start_setup(self):
         self.destroy()
-        app = SetupApp(self.parent, "resources/Parking-Lot.jpg", ParkingLot())
+        app = SetupApp(self.parent, "resources/init.jpg", ParkingLot())
 
     def start_monitor(self):
         self.destroy()
-        app = MonitorApp(self.parent, "resources/Parking-Lot.jpg", ParkingLot())
+        app = MonitorApp(self.parent, "resources/init.jpg", ParkingLot())
 
 
 class SetupApp(tk.Frame):
@@ -67,11 +70,38 @@ class SetupApp(tk.Frame):
         self.deleteSpotButton = tk.Button(self, text='Delete Selected', command=self.delete_selection)
         self.deleteSpotButton.grid(row=8, column=1, sticky='E')
 
+        #single image load Button
+        self.loadImageButton = tk.Button(self, text="load image", command=self.manual_set_image)
+        self.loadImageButton.grid(row=9, column=1, sticky='E')
+
+        #toggle update button
+        self.toggleUpdateButton = tk.Button(self, text="toggle update", command=self.update_toggle)
+        self.toggleUpdateButton.grid(row=10, column=1, sticky='E')
+
         # bind events
         self.parent.bind('c', self.window_exit)
-        self.update_all()  # this kicks off the main root calling updates ever 100 ms
 
         self.pack()
+
+        self.image_source_directory = "resources/lot_images/"
+        self.timestamp = time.time()
+
+        self.update_toggle_bool = False
+
+        self.update_all()  # this kicks off the main root calling updates ever 100 ms
+
+    def manual_set_image(self, events=None):
+        filename = tkFileDialog.askopenfilename(parent=self.parent)
+        if filename is not None:
+            try:
+                self.parkinglot.currentLotImage = filename
+                self.canvas.update_image()
+            except (SyntaxError, AttributeError) as e:
+                print "Improper File"
+                print filename
+                pass
+        else:
+            pass
 
     def update_lot(self):
         # there is absolutely no way this works as intended on first run. i refuse to believe it.
@@ -85,7 +115,7 @@ class SetupApp(tk.Frame):
             print 'Warning: Images have not finished processing from the last iteration'
             pass
         else:
-            threading.Thread(target=self.parkinglot.update, args=[self.image_path]).start()
+            threading.Thread(target=self.parkinglot.update, args=[]).start()
 
     def delete_selection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.get_selection_id())
@@ -97,7 +127,38 @@ class SetupApp(tk.Frame):
         self.destroy()
         app=RoleSelect(self.parent)
 
+    def update_toggle(self):
+        self.update_toggle_bool = not self.update_toggle_bool
+
+    def update_current_image(self):
+        images = os.listdir(self.image_source_directory)
+        if images:
+            if self.parkinglot.currentLotImage == 'resources/init.jpg':
+                self.parkinglot.currentLotImage = self.image_source_directory + images[0]
+                self.canvas.update_image()
+
+            else:
+                out_dir = 'resources/old_lot_images/'+str(datetime.datetime.fromtimestamp(time.time())).split('.')[0].replace(':', '_')+'.jpg'
+
+                self.parkinglot.currentLotImage = self.image_source_directory + images[0]
+                self.canvas.parkinglot.currentLotImage = self.image_source_directory + images[0]
+                self.canvas.update_image()
+
+                os.rename(self.parkinglot.currentLotImage, out_dir)
+                print 'Update Image - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
+
+        else:
+            print 'No Images Found - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
+
+
+
     def update_all(self, event=None):
+        if time.time() - self.timestamp > 2 and self.update_toggle_bool:
+            self.timestamp = time.time()
+            self.update_current_image()
+            #maybe might crash since im trying to delete images around when i call this
+            self.update_lot()
+
         self.parkingspot_listbox.update_parkingspot_list()
         id_number = self.parkingspot_listbox.get_selection_id()
 
@@ -121,9 +182,11 @@ class MonitorApp(SetupApp):
 
         # remove delete button
         self.deleteSpotButton.grid_forget()
-        
+
         #remove save lot menuitem
         self.menubar.delete(1)
+
+
 
 
 if __name__ == "__main__":
@@ -134,19 +197,7 @@ if __name__ == "__main__":
 
     root = tk.Tk()
     root.resizable(0, 0)
-    
-    if len(sys.argv) == 1 or sys.argv[1] == 'role':
-        app = RoleSelect(root)
-    elif sys.argv[1] == 'imtest':
-        pklot = ParkingLot()
-        pklot.loadXML('testxml.xml')
 
-        imp = ImageProcessor('model_8.tar.gz', pklot)
-        imp.get_results('Parking-Lot.jpg')
+    app = RoleSelect(root)
 
-        os.sys.exit(0)
-
-    else:
-        app = RoleSelect(root)
-        
     root.mainloop()
