@@ -111,11 +111,13 @@ class SetupApp(tk.Frame):
         # was worried about stray threads piling up, but threading.enumerate seems to show that things clean up after
         # themselves.
 
-        if threading.activeCount() > 1:
-            print 'Warning: Images have not finished processing from the last iteration'
-            pass
-        else:
-            threading.Thread(target=self.parkinglot.update, args=[]).start()
+        self.parkinglot.update()
+
+        #if threading.activeCount() > 1:
+        #    print 'Warning: Images have not finished processing from the last iteration'
+        #    pass
+        #else:
+        #    threading.Thread(target=self.parkinglot.update, args=[]).start()
 
     def delete_selection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.get_selection_id())
@@ -132,20 +134,28 @@ class SetupApp(tk.Frame):
 
     def update_current_image(self):
         images = os.listdir(self.image_source_directory)
+        images.sort()
+        print images
         if images:
             if self.parkinglot.currentLotImage == 'resources/init.jpg':
                 self.parkinglot.currentLotImage = self.image_source_directory + images[0]
                 self.canvas.update_image()
 
             else:
-                out_dir = 'resources/old_lot_images/'+str(datetime.datetime.fromtimestamp(time.time())).split('.')[0].replace(':', '_')+'.jpg'
-
-                self.parkinglot.currentLotImage = self.image_source_directory + images[0]
-                self.canvas.parkinglot.currentLotImage = self.image_source_directory + images[0]
-                self.canvas.update_image()
-
+                out_dir = 'resources/old_lot_images/' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0].replace(':', '_') + '.jpg'
                 os.rename(self.parkinglot.currentLotImage, out_dir)
-                print 'Update Image - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
+                # repetitive. the way i handle the initial image removes the new image before it gets processed.
+                # im tired and the only way i can think to fix it easily is to just rebuild the list here.
+                # definitely not a good way to handle it though.
+                images = os.listdir(self.image_source_directory)
+                if images:  # chance of the list being empty since removing files above.
+                    images.sort()
+
+                    self.parkinglot.currentLotImage = self.image_source_directory + images[0]
+                    self.canvas.parkinglot.currentLotImage = self.image_source_directory + images[0]
+                    self.canvas.update_image()
+
+                    print 'Update Image - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
 
         else:
             print 'No Images Found - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
@@ -153,7 +163,7 @@ class SetupApp(tk.Frame):
 
 
     def update_all(self, event=None):
-        if time.time() - self.timestamp > 2 and self.update_toggle_bool:
+        if time.time() - self.timestamp > 5 and self.update_toggle_bool:
             self.timestamp = time.time()
             self.update_current_image()
             #maybe might crash since im trying to delete images around when i call this
