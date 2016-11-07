@@ -101,6 +101,7 @@ class ImageClassify:
         image = np.array(image)
         # squash
         image = scipy.misc.imresize(image, (height, width), 'bilinear')
+
         return image
 
     @staticmethod
@@ -284,12 +285,12 @@ class ImageProcessor:
         self.classifier = ImageClassify(networkArchive)
         self.parkinglot = parkingLot
 
-    def divide_image(self, imagepath):
+    def divide_image(self, cv2_image):
         """Gets a list of parking spot ids and their specific sections of the given image.
            Then saves all images to a folder, named after their ID
         """
 
-        img = cv2.imread(imagepath)
+        img = cv2_image
         # [ [id, location], [id, location], ... ]
         infolist = zip([x.id for x in self.parkinglot.getParkingSpots()],
                        [x.location for x in self.parkinglot.getParkingSpots()])
@@ -339,12 +340,12 @@ class ImageProcessor:
 
         return cropped
 
-    def get_results(self, image_path):
+    def get_results(self, cv2_image):
         """return a list of the shape
               [[id, [(Label, confidence)]
               now revised to [[id, most likely label], ...]
         """
-        self.divide_image(image_path)
+        self.divide_image(cv2_image)
         image_names = os.listdir('cropped_images/')
         # no parking spots = crashing, so handle it
         if not image_names:

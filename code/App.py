@@ -1,4 +1,5 @@
-import sys, os
+import random
+import sys, os, shutil
 import Tkinter as tk
 import tkFileDialog
 import threading
@@ -43,14 +44,14 @@ class SetupApp(tk.Frame):
     def __init__(self, parent, image_path, PKLot):
         self.parent = parent
         self.parkinglot = PKLot
-        self.image_path = image_path
+        self.cv2_img = cv2.imread(image_path)
 
         tk.Frame.__init__(self, master=self.parent)
 
         self.winfo_toplevel().title('Setup')
         self.winfo_toplevel().configure(background='grey')
 
-        self.canvas = ui.CanvasArea(self, self.parkinglot, image_path)
+        self.canvas = ui.CanvasArea(self, self.parkinglot, self.cv2_img)
         self.canvas.grid(row=0, column=0, sticky=tk.N)
 
         # Parking Spot List
@@ -83,10 +84,17 @@ class SetupApp(tk.Frame):
 
         self.pack()
 
-        self.image_source_directory = "resources/lot_images/"
         self.timestamp = time.time()
 
         self.update_toggle_bool = False
+
+        self.image_source_directory = os.getcwd() + "/resources/lot_images/"
+        self.img_origin_directory = os.getcwd() + '/resources/source_images/'
+
+        t = threading.Thread(target=image_swapper, args=[self.img_origin_directory, self.image_source_directory])
+        t.daemon = True
+        t.start()
+
 
         self.update_all()  # this kicks off the main root calling updates ever 100 ms
 
@@ -94,8 +102,8 @@ class SetupApp(tk.Frame):
         filename = tkFileDialog.askopenfilename(parent=self.parent)
         if filename is not None:
             try:
-                self.parkinglot.currentLotImage = filename
-                self.canvas.update_image()
+                self.parkinglot.currentLotImage = cv2.imread(filename)
+                self.canvas.update_image(self.parkinglot.currentLotImage)
             except (SyntaxError, AttributeError) as e:
                 print "Improper File"
                 print filename
@@ -111,13 +119,13 @@ class SetupApp(tk.Frame):
         # was worried about stray threads piling up, but threading.enumerate seems to show that things clean up after
         # themselves.
 
-        self.parkinglot.update()
+        #self.parkinglot.update()
 
-        #if threading.activeCount() > 1:
-        #    print 'Warning: Images have not finished processing from the last iteration'
-        #    pass
-        #else:
-        #    threading.Thread(target=self.parkinglot.update, args=[]).start()
+        if threading.activeCount() > 2:
+            print 'Warning: Images have not finished processing from the last iteration'
+            pass
+        else:
+            threading.Thread(target=self.parkinglot.update, args=[]).start()
 
     def delete_selection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.get_selection_id())
@@ -133,37 +141,55 @@ class SetupApp(tk.Frame):
         self.update_toggle_bool = not self.update_toggle_bool
 
     def update_current_image(self):
-        images = os.listdir(self.image_source_directory)
-        images.sort()
-        print images
-        if images:
-            if self.parkinglot.currentLotImage == 'resources/init.jpg':
-                self.parkinglot.currentLotImage = self.image_source_directory + images[0]
-                self.canvas.update_image()
+        # take the image, or the first, image from the image_source_directory.
+        # currently going to try just deleting the image when done with it.
 
-            else:
-                out_dir = 'resources/old_lot_images/' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0].replace(':', '_') + '.jpg'
-                os.rename(self.parkinglot.currentLotImage, out_dir)
-                # repetitive. the way i handle the initial image removes the new image before it gets processed.
-                # im tired and the only way i can think to fix it easily is to just rebuild the list here.
-                # definitely not a good way to handle it though.
-                images = os.listdir(self.image_source_directory)
-                if images:  # chance of the list being empty since removing files above.
-                    images.sort()
+        # this function relies on something else in the background supplying images.
+        # so perhaps a separate thread populating the directory with an endless cycle of images.
+        # (as a place holder for an actual camera system)
 
-                    self.parkinglot.currentLotImage = self.image_source_directory + images[0]
-                    self.canvas.parkinglot.currentLotImage = self.image_source_directory + images[0]
-                    self.canvas.update_image()
+        # so when function call, set the image to the image in the directory.
+        # then, update the parking lot image path
+        # then, update the canvas.
 
-                    print 'Update Image - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
-
-        else:
-            print 'No Images Found - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
+        image = os.listdir(self.image_source_directory)
+        if image:
+            image = image[0]
+            self.parkinglot.currentLotImage = cv2.imread(self.image_source_directory + image)
+            self.canvas.update_image(self.parkinglot.currentLotImage)
+            os.remove(self.image_source_directory + image)
+            print "Image " + image + " Removed"
+            self.update_lot()
 
 
+        #images = os.listdir(self.image_source_directory)
+        #images.sort()
+        #if images:
+        #    if self.parkinglot.currentLotImage == 'resources/init.jpg':
+        #        self.parkinglot.currentLotImage = self.image_source_directory + images[0]
+        #        self.canvas.update_image()
+
+        #    else:
+        #        out_dir = 'resources/old_lot_images/' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0].replace(':', '_') + '.jpg'
+        #        os.rename(self.parkinglot.currentLotImage, out_dir)
+        #        # repetitive. the way i handle the initial image removes the new image before it gets processed.
+        #        # im tired and the only way i can think to fix it easily is to just rebuild the list here.
+        #        # definitely not a good way to handle it though.
+        #        images = os.listdir(self.image_source_directory)
+        #        if images:  # chance of the list being empty since removing files above.
+        #            images.sort()
+
+        #            self.parkinglot.currentLotImage = self.image_source_directory + images[0]
+        #            self.canvas.parkinglot.currentLotImage = self.image_source_directory + images[0]
+        #            self.canvas.update_image()
+
+        #            print 'Update Image - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
+
+        #else:
+        #    print 'No Images Found - ' + str(datetime.datetime.fromtimestamp(time.time())).split('.')[0]
 
     def update_all(self, event=None):
-        if time.time() - self.timestamp > 5 and self.update_toggle_bool:
+        if time.time() - self.timestamp > 10 and self.update_toggle_bool:
             self.timestamp = time.time()
             self.update_current_image()
             #maybe might crash since im trying to delete images around when i call this
@@ -194,9 +220,19 @@ class MonitorApp(SetupApp):
         self.deleteSpotButton.grid_forget()
 
         #remove save lot menuitem
-        self.menubar.delete(1)
+        self.menubar.delete(2)
 
 
+def image_swapper(source_directory, populate_directory):
+    # Meant to run in separate thread. DO NOT run in main thread.
+    while True:
+        population_images = os.listdir(populate_directory)
+        if not population_images:
+            print population_images
+            options = os.listdir(source_directory)
+            choice = random.choice(options)
+            shutil.copy(source_directory + choice, populate_directory + choice)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
