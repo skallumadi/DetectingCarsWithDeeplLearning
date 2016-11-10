@@ -14,7 +14,7 @@ class ParkingLot:
         self.numEmpty = 0
         self.parkingSpots = []  # a list of all the parking spots and status.
 
-        self.currentLotImage = ''
+        self.currentLotImage = cv2.imread('resources/init.jpg')
 
         # only set up the processor if the system has libraries for it
         try:
@@ -22,9 +22,6 @@ class ParkingLot:
         except NameError:
             self.imageprocessor = None
             print "tar.gz file of network not found in 'resources/'"
-
-        # self.currentLotImage = #the most recent image for the parking lot
-        # self.imageClassifier = #link to image classifier object to process images
 
         if path:
             self.infoPath = path
@@ -105,7 +102,6 @@ class ParkingLot:
         else:
             self.parkingSpots.append(Spot(str(self.spotIDCounter), coordinates, 'empty'))
             self.spotIDCounter += 1
-        # self.update(self.currentLotImage)
 
     def removeSpot(self, ID):
         """ remove a particular spot from the list of monitored locations.
@@ -118,11 +114,10 @@ class ParkingLot:
                 return
         raise Exception("No spot with given id " + str(ID) + " found.")
 
-    def update(self, imagepath):
+    def update(self):
         """ update the current information for this parking lot.
             the image given is expected to be the most recent image for the lot.
         """
-        self.currentLotImage = imagepath
         if self.imageprocessor is None:
             return
 

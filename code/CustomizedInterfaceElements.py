@@ -19,11 +19,11 @@ class CanvasArea(tk.Canvas):
             to keep in the main class, and separating it would be of benefit.
     """
 
-    def __init__(self, window, parkinglot, imgpath):
+    def __init__(self, window, parkinglot, cv2_img):
         self.window = window
         self.parkinglot = parkinglot
-
-        self.cv2_img = self.load_cv2_image(imgpath)
+        #self.cv2_img = self.load_cv2_image(imgpath)
+        self.cv2_img = cv2_img
         width, height, _ = self.cv2_img.shape
         self.dimensions = (height, width)
 
@@ -33,31 +33,28 @@ class CanvasArea(tk.Canvas):
         self.create_image(0, 0, image=self.tk_img, anchor=tk.NW)
         self.image = self.tk_img
 
-
-
         self.current_points_list = []  # used for the box currently being drawn
         self.highlightedSpot = Spot('-1', [0, 0, 0, 0, 0, 0, 0, 0])
-
         # bind canvas events
         # multiple functions can be bound to an event by using the 'add="+"' argument. TIL.
         self.bind('<B1-Motion>', self.draw_area)
         self.bind('<ButtonRelease-1>', self.create_rectangle, add="+")
         self.bind('<ButtonRelease-1>', self.update_all, add="+")
 
-    @staticmethod
-    def load_cv2_image(path):
-        """ From the given path, load a jpeg
-            and return a cv2 image object
-        """
-        img = cv2.imread(path)
-        return img
+    #@staticmethod
+    #def load_cv2_image(path):
+    #    """ From the given path, load a jpeg
+    #        and return a cv2 image object
+    #    """
+    #    img = cv2.imread(path)
+    #    return img
 
     @staticmethod
-    def get_imageTK_obj(cv2Img):
+    def get_imageTK_obj(cv2_img):
         """ from the given cv2 image, return a TKImage object for display
         """
         # the color channels need to be shuffled around due to differences between cv2 and tk
-        b, g, r = cv2.split(cv2Img)
+        b, g, r = cv2.split(cv2_img)
         shuffled_image = cv2.merge((r, g, b))
 
         img = Image.fromarray(shuffled_image)
@@ -107,14 +104,26 @@ class CanvasArea(tk.Canvas):
             color = 'lime'
             if spot.status == 'occupied':
                 color = 'red'
-            self.create_polygon(spot.location, fill='', outline=color, tags='parkingspot')
+            self.create_polygon(spot.location, fill='', outline=color, tags='parkingspot', width=2)
             self.create_text(spot.location[0]+10, spot.location[1]+10, text=spot.id, tags='parkinglabel', fill='lime')
+
+    def update_image(self, cv2_img):
+        self.cv2_img = cv2_img  # self.load_cv2_image(self.parkinglot.currentLotImage)
+        width, height, _ = self.cv2_img.shape
+        self.dimensions = (height, width)
+
+        self.tk_img = self.get_imageTK_obj(self.cv2_img)
+        self.create_image(0,0, image=self.tk_img, anchor = tk.NW)
+        self.image = self.tk_img
+
+        self.draw_rectangles()
 
     def update_all(self, events=None):
         self.draw_rectangles()
         self.delete('highlight')
         try:
-            self.create_polygon(self.highlightedSpot.location, fill='', outline='white', tags='highlight', width=2)
+            highlight = [val - 2 for val in self.highlightedSpot.location]
+            self.create_polygon(self.highlightedSpot.location, fill='', outline='white', tags='highlight', width=1)
             self.create_text(self.highlightedSpot.location[0]+10, self.highlightedSpot.location[1]+10, text=self.highlightedSpot.id, tags='highlight', fill='red')
         except AttributeError:
             pass
