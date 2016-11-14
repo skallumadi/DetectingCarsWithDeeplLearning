@@ -122,11 +122,6 @@ class SetupApp(tk.Frame):
         self.vacant_label.grid(row=2, column=0, sticky='W')
         self.vacant_count_label.grid(row=2, column=1, sticky='W')
 
-        self.loading_stringvar = tk.StringVar()
-        self.loading_stringvar.set("")
-        self.loading_label = tk.Label(self, textvar=self.loading_stringvar)
-        self.loading_label.grid(row=3, column=1, sticky='W')
-
         # bind events
         self.parent.bind('c', self.window_exit)
 
@@ -162,15 +157,14 @@ class SetupApp(tk.Frame):
     def update_lot(self):
         # i realized that this is surrounded on all sides by dependencies. for now this function will not be used,
         # everything will be serial. (because it was so tied to everything else, speedup was barely there anyways)
+
+        # uh... removing this made the program abort so.... i guess it gets to stay...
         if threading.activeCount() > 3:
             print 'Warning: Images have not finished processing from the last iteration'
             print 'Active Threads: ' + str(threading.activeCount())
             pass
         else:
-            self.loading_stringvar.set("Processing...")
             threading.Thread(target=self.parkinglot.update, args=[]).start()
-            self.loading_stringvar.set("done")
-
 
     def delete_selection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.get_selection_id())
@@ -204,12 +198,9 @@ class SetupApp(tk.Frame):
         if time.time() - self.timestamp > 10 and self.update_toggle_bool:
             self.timestamp = time.time()
             self.update_current_image()
-            # self.update_lot()  # removed because threading is hard to do.
-            self.loading_stringvar.set("Processing...")
-            self.loading_label.update_idletasks()
-            self.parkinglot.update()
-            self.parkinglot.saveUsage(os.getcwd() + '/resources/lot_stats/' + self.parkinglot.name + '.txt')
-            self.loading_stringvar.set("")
+            self.update_lot()  # removed because threading is hard to do.
+            #self.parkinglot.update()
+            #self.parkinglot.saveUsage(os.getcwd() + '/resources/lot_stats/' + self.parkinglot.name + '.txt')
 
 
         self.parkingspot_listbox.update_parkingspot_list()
