@@ -96,11 +96,14 @@ class ImageClassify:
         mode -- the PIL mode that the image should be converted to
             (RGB for color or L for grayscale)
         """
-        image = PIL.Image.open(path)
-        image = image.convert(mode)
-        image = np.array(image)
-        # squash
-        image = scipy.misc.imresize(image, (height, width), 'bilinear')
+        try:
+            image = PIL.Image.open(path)
+            image = image.convert(mode)
+            image = np.array(image)
+            # squash
+            image = scipy.misc.imresize(image, (height, width), 'bilinear')
+        except IOError:
+            image = None
 
         return image
 

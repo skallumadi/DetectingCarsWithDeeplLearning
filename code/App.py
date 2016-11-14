@@ -1,5 +1,6 @@
 import random
 import sys, os, shutil
+sys.dont_write_bytecode = True
 import threading
 import time
 
@@ -34,12 +35,14 @@ class RoleSelect(tk.Frame):
         # directory paths for image source and image origin
         self.source_label = tk.Label(self, text='Enter Image Source: ')
         self.source_var = tk.StringVar()
+        self.source_var.set("/resources/lot_source/")
         self.source_entry = tk.Entry(self, textvariable=self.source_var)
         self.source_label.pack(side=tk.LEFT)
         self.source_entry.pack(side=tk.LEFT)
 
         self.origin_label = tk.Label(self, text='Enter Image Origin: ')
         self.origin_var = tk.StringVar()
+        self.origin_var.set('/resources/lot_origin/')
         self.origin_entry = tk.Entry(self, textvariable=self.origin_var)
         self.origin_label.pack(side=tk.LEFT)
         self.origin_entry.pack(side=tk.LEFT)
@@ -119,12 +122,17 @@ class SetupApp(tk.Frame):
         self.vacant_label.grid(row=2, column=0, sticky='W')
         self.vacant_count_label.grid(row=2, column=1, sticky='W')
 
+        self.loading_stringvar = tk.StringVar()
+        self.loading_stringvar.set("")
+        self.loading_label = tk.Label(self, textvar=self.loading_stringvar)
+        self.loading_label.grid(row=3, column=1, sticky='W')
+
         # bind events
         self.parent.bind('c', self.window_exit)
 
         self.pack()
 
-        self.timestamp = time.time()
+        self.timestamp = time.time() - 20
 
         self.update_toggle_bool = False
 
@@ -152,12 +160,17 @@ class SetupApp(tk.Frame):
             pass
 
     def update_lot(self):
+        # i realized that this is surrounded on all sides by dependencies. for now this function will not be used,
+        # everything will be serial. (because it was so tied to everything else, speedup was barely there anyways)
         if threading.activeCount() > 3:
             print 'Warning: Images have not finished processing from the last iteration'
             print 'Active Threads: ' + str(threading.activeCount())
             pass
         else:
+            self.loading_stringvar.set("Processing...")
             threading.Thread(target=self.parkinglot.update, args=[]).start()
+            self.loading_stringvar.set("done")
+
 
     def delete_selection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.get_selection_id())
@@ -191,11 +204,17 @@ class SetupApp(tk.Frame):
         if time.time() - self.timestamp > 10 and self.update_toggle_bool:
             self.timestamp = time.time()
             self.update_current_image()
-            self.update_lot()
+            # self.update_lot()  # removed because threading is hard to do.
+            self.loading_stringvar.set("Processing...")
+            self.loading_label.update_idletasks()
+            self.parkinglot.update()
+            self.parkinglot.saveUsage(os.getcwd() + '/resources/lot_stats/' + self.parkinglot.name + '.txt')
+            self.loading_stringvar.set("")
+
 
         self.parkingspot_listbox.update_parkingspot_list()
-        id_number = self.parkingspot_listbox.get_selection_id()
 
+        id_number = self.parkingspot_listbox.get_selection_id()
         try:  # try to set the highlighted spot, unless it doesnt exist
             self.canvas.highlightedSpot = self.parkinglot.getSingleSpot(id_number)
         except (IndexError, AttributeError) as e:
