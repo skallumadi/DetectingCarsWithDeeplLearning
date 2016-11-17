@@ -96,14 +96,11 @@ class ImageClassify:
         mode -- the PIL mode that the image should be converted to
             (RGB for color or L for grayscale)
         """
-        try:
-            image = PIL.Image.open(path)
-            image = image.convert(mode)
-            image = np.array(image)
-            # squash
-            image = scipy.misc.imresize(image, (height, width), 'bilinear')
-        except IOError:
-            image = None
+        image = PIL.Image.open(path)
+        image = image.convert(mode)
+        image = np.array(image)
+        # squash
+        image = scipy.misc.imresize(image, (height, width), 'bilinear')
 
         return image
 
@@ -302,7 +299,10 @@ class ImageProcessor:
 
         # must delete all images every time you write the list, or some changes will not be accurately shown
         for filename in os.listdir('cropped_images/'):
-            os.remove('cropped_images/' + filename)
+            try:
+                os.remove('cropped_images/' + filename)
+            except OSError:
+                pass
         for img in cropped_images:
             cv2.imwrite('cropped_images/' + img[0] + '.jpg', img[1])
 
@@ -357,7 +357,7 @@ class ImageProcessor:
 
         ids = [x[:-4] for x in image_names]
 
-        confidences = self.classifier.classify_with_archive(listofimages)
+        confidences = self.classifier.classify_with_archive(listofimages) #######################################3
 
         winning_labels = []
         for item in confidences:

@@ -202,7 +202,6 @@ class SetupApp(tk.Frame):
             #self.parkinglot.update()
             #self.parkinglot.saveUsage(os.getcwd() + '/resources/lot_stats/' + self.parkinglot.name + '.txt')
 
-
         self.parkingspot_listbox.update_parkingspot_list()
 
         id_number = self.parkingspot_listbox.get_selection_id()
@@ -235,13 +234,14 @@ class MonitorApp(SetupApp):
 
 def image_swapper(source_directory, populate_directory):
     # Meant to run in separate thread. DO NOT run in main thread.
+    time.sleep(1)
     while True:
         population_images = os.listdir(populate_directory)
         if not population_images:
             options = os.listdir(source_directory)
             choice = random.choice(options)
             shutil.copy(source_directory + choice, populate_directory + choice)
-        time.sleep(2)
+        time.sleep(10)
 
 
 if __name__ == "__main__":
