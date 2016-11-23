@@ -1,6 +1,5 @@
 import random
 import sys, os, shutil
-sys.dont_write_bytecode = True
 import threading
 import time
 
@@ -13,11 +12,13 @@ from PIL import ImageTk
 import CustomizedInterfaceElements as ui
 from ParkingLot import *
 
+import ConfigParser
 
 class RoleSelect(tk.Frame):
     def __init__(self, parent):
         self.parent = parent
         tk.Frame.__init__(self, master=self.parent)
+        self.lot_origin, self.lot_source, self.stats_file = self.load_config()
 
         # add a label with the project logo
         # separate operations on loading the image because anti aliasing didn't work otherwise
@@ -35,14 +36,14 @@ class RoleSelect(tk.Frame):
         # directory paths for image source and image origin
         self.source_label = tk.Label(self, text='Enter Image Source: ')
         self.source_var = tk.StringVar()
-        self.source_var.set("/resources/lot_source/")
+        self.source_var.set(self.lot_source)
         self.source_entry = tk.Entry(self, textvariable=self.source_var)
         self.source_label.pack(side=tk.LEFT)
         self.source_entry.pack(side=tk.LEFT)
 
         self.origin_label = tk.Label(self, text='Enter Image Origin: ')
         self.origin_var = tk.StringVar()
-        self.origin_var.set('/resources/lot_origin/')
+        self.origin_var.set(self.lot_origin)
         self.origin_entry = tk.Entry(self, textvariable=self.origin_var)
         self.origin_label.pack(side=tk.LEFT)
         self.origin_entry.pack(side=tk.LEFT)
@@ -50,29 +51,51 @@ class RoleSelect(tk.Frame):
         self.pack()
 
     def start_setup(self):
-        origin = os.getcwd() + self.origin_var.get()
-        source = os.getcwd() + self.source_var.get()
+        origin = os.path.normpath(os.getcwd() + self.origin_var.get())
+        source = os.path.normpath(os.getcwd() + self.source_var.get())
         if os.path.isdir(origin) and os.path.isdir(source):
             self.destroy()
-            app = SetupApp(self.parent, "resources/init.jpg", ParkingLot(), source, origin)
+            app = SetupApp(self.parent, "resources/init.jpg", ParkingLot(), source, origin, self.stats_file)
         else:
             print "Invalid Directories"
 
     def start_monitor(self):
-        origin = os.getcwd() + self.origin_var.get()
-        source = os.getcwd() + self.source_var.get()
+        origin = os.path.normpath(os.getcwd() + self.origin_var.get())
+        source = os.path.normpath(os.getcwd() + self.source_var.get())
+        print origin
+        print source
         if os.path.isdir(origin) and os.path.isdir(source):
             self.destroy()
-            app = MonitorApp(self.parent, "resources/init.jpg", ParkingLot(), source, origin)
+            app = MonitorApp(self.parent, "resources/init.jpg", ParkingLot(), source, origin, self.stats_file)
         else:
             print "Invalid Directories"
 
+    def load_config(self, filepath='/resources/config.ini'):
+        cwd = os.getcwd()
+        path = os.path.normpath(os.getcwd()) + os.path.normpath(filepath)
+        print path
+        if not os.path.isfile(path):
+            print "Creating Config File...",
+            f = open(path, 'w')
+            f.write('[Settings]\nimage_source : /resources/lot_source/\nimage_origin : /resources/lot_origin/\nstats_file : /resources/lot_stats/usage.txt\n')
+            f.close()
+            print 'Done.'
+        configparser = ConfigParser.ConfigParser()
+        configparser.read(path)
+
+        image_source = configparser.get('Settings', 'image_source')
+        image_origin = configparser.get('Settings', 'image_origin')
+        stats_file = configparser.get('Settings', 'stats_file')
+
+        return image_origin, image_source, stats_file
+
 
 class SetupApp(tk.Frame):
-    def __init__(self, parent, image_path, PKLot, img_src_dir, img_origin_dir):
+    def __init__(self, parent, image_path, PKLot, img_src_dir, img_origin_dir, stats_file='/resources/lot_stats/'):
         self.parent = parent
         self.parkinglot = PKLot
         self.cv2_img = cv2.imread(image_path)
+        self.stats_file = stats_file
 
         tk.Frame.__init__(self, master=self.parent)
 
@@ -158,13 +181,14 @@ class SetupApp(tk.Frame):
         # i realized that this is surrounded on all sides by dependencies. for now this function will not be used,
         # everything will be serial. (because it was so tied to everything else, speedup was barely there anyways)
 
-        # uh... removing this made the program abort so.... i guess it gets to stay...
-        if threading.activeCount() > 3:
-            print 'Warning: Images have not finished processing from the last iteration'
-            print 'Active Threads: ' + str(threading.activeCount())
-            pass
-        else:
-            threading.Thread(target=self.parkinglot.update, args=[]).start()
+        # currently switching back and forth between threading and not. currently not.
+        #if threading.activeCount() > 3:
+        #    print 'Warning: Images have not finished processing from the last iteration'
+        #    print 'Active Threads: ' + str(threading.activeCount())
+        #    pass
+        #else:
+        #    threading.Thread(target=self.parkinglot.update, args=[]).start()
+        self.parkinglot.update()
 
     def delete_selection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.get_selection_id())
@@ -198,9 +222,8 @@ class SetupApp(tk.Frame):
         if time.time() - self.timestamp > 10 and self.update_toggle_bool:
             self.timestamp = time.time()
             self.update_current_image()
-            self.update_lot()  # removed because threading is hard to do.
-            #self.parkinglot.update()
-            #self.parkinglot.saveUsage(os.getcwd() + '/resources/lot_stats/' + self.parkinglot.name + '.txt')
+            self.update_lot()
+            self.parkinglot.saveUsage(os.getcwd() + self.stats_file + self.parkinglot.name + '.txt')
 
         self.parkingspot_listbox.update_parkingspot_list()
 
@@ -219,8 +242,8 @@ class SetupApp(tk.Frame):
 
 class MonitorApp(SetupApp):
     # since this is just a version of SetupApp with functionality removed, then it can just inherit directly from it ez.
-    def __init__(self, parent, image_path, PKLot, img_src_dir, img_origin_dir):
-        SetupApp.__init__(self, parent, image_path, PKLot, img_src_dir, img_origin_dir)
+    def __init__(self, parent, image_path, PKLot, img_src_dir, img_origin_dir, stats_file='/resources/lot_stats/'):
+        SetupApp.__init__(self, parent, image_path, PKLot, img_src_dir, img_origin_dir, stats_file='/resources/lot_stats/')
 
         # remove the ability for users to draw things in monitor mode
         self.canvas.unbind('<B1-Motion>')
