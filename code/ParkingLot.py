@@ -8,7 +8,8 @@ except ImportError:
     pass
 
 class ParkingLot:
-    def __init__(self, path=None):
+    def __init__(self, path=None, name='Unassigned'):
+        self.name = name
         self.spotIDCounter = 0  # how many spots are on record
         self.numOccupied = 0
         self.numEmpty = 0
@@ -37,6 +38,7 @@ class ParkingLot:
 
         tree = ET.ElementTree(file=filename)
         self.spotIDCounter = int(next(tree.iter(tag='NextAvailableID')).attrib['counter'])
+        self.name = str(next(tree.iter(tag='LotName')).attrib['name'])
         for elem in tree.iter(tag='Spot'):
             loc = elem.attrib['location']
             idNumber = elem.attrib['id']
@@ -48,6 +50,7 @@ class ParkingLot:
         root = ET.Element('root')
         pklot = ET.SubElement(root, "ParkingLot")
 
+        lotname = ET.SubElement(pklot, "LotName", name=str(self.name))
         idCounter = ET.SubElement(pklot, "NextAvailableID", counter=str(self.spotIDCounter))
         for spot in self.parkingSpots:
             ET.SubElement(pklot, 'Spot', id=str(spot.id), location=' '.join(str(x) for x in spot.location))
@@ -59,6 +62,11 @@ class ParkingLot:
         """ save current lot information to separate file.
             how many spots are open, which ones specifically, time, etc.
         """
+        message = time.strftime('%c') + ' : '
+        for spot in self.getParkingSpots():
+            message += str(spot.id) + ', ' + spot.status + '; '
+        with open(filePath, 'a') as outfile:
+            outfile.write(message + '\n')
         pass
 
     def getParkingSpots(self):
