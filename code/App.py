@@ -20,6 +20,14 @@ class RoleSelect(tk.Frame):
         tk.Frame.__init__(self, master=self.parent)
         self.lot_origin, self.lot_source, self.stats_file = self.load_config()
 
+        # check if all the folders that need to exist actually do.
+        if not os.path.isdir('cropped_images/'):
+            os.makedirs('cropped_images/')
+        if not os.path.isdir('resources/lot_origin/'):
+            os.makedirs('resources/lot_origin/')
+        if not os.path.isdir('/resources/lot_source/'):
+            os.makedirs('resources/lot_source/')
+
         # add a label with the project logo
         # separate operations on loading the image because anti aliasing didn't work otherwise
         pilimage = PIL.Image.open('resources/Logo-WhiteBG.png')
