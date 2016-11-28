@@ -25,7 +25,7 @@ class RoleSelect(tk.Frame):
             os.makedirs('cropped_images/')
         if not os.path.isdir('resources/lot_origin/'):
             os.makedirs('resources/lot_origin/')
-        if not os.path.isdir('/resources/lot_source/'):
+        if not os.path.isdir('resources/lot_source/'):
             os.makedirs('resources/lot_source/')
 
         # add a label with the project logo
@@ -59,8 +59,8 @@ class RoleSelect(tk.Frame):
         self.pack()
 
     def start_setup(self):
-        origin = os.path.normpath(os.getcwd() + self.origin_var.get())
-        source = os.path.normpath(os.getcwd() + self.source_var.get())
+        origin = os.path.normpath(os.getcwd() + self.origin_var.get()) + '/'
+        source = os.path.normpath(os.getcwd() + self.source_var.get()) + '/'
         if os.path.isdir(origin) and os.path.isdir(source):
             self.destroy()
             app = SetupApp(self.parent, "resources/init.jpg", ParkingLot(), source, origin, self.stats_file)
@@ -85,7 +85,7 @@ class RoleSelect(tk.Frame):
         if not os.path.isfile(path):
             print "Creating Config File...",
             f = open(path, 'w')
-            f.write('[Settings]\nimage_source : /resources/lot_source/\nimage_origin : /resources/lot_origin/\nstats_file : /resources/lot_stats/usage.txt\n')
+            f.write('[Settings]\nimage_source : /resources/lot_source/\nimage_origin : /resources/lot_origin/\nstats_file : resources/lot_stats/\n')
             f.close()
             print 'Done.'
         configparser = ConfigParser.ConfigParser()
@@ -94,12 +94,13 @@ class RoleSelect(tk.Frame):
         image_source = configparser.get('Settings', 'image_source')
         image_origin = configparser.get('Settings', 'image_origin')
         stats_file = configparser.get('Settings', 'stats_file')
+        print stats_file
 
         return image_origin, image_source, stats_file
 
 
 class SetupApp(tk.Frame):
-    def __init__(self, parent, image_path, PKLot, img_src_dir, img_origin_dir, stats_file='/resources/lot_stats/'):
+    def __init__(self, parent, image_path, PKLot, img_src_dir, img_origin_dir, stats_file='resources/lot_stats/'):
         self.parent = parent
         self.parkinglot = PKLot
         self.cv2_img = cv2.imread(image_path)
@@ -231,7 +232,8 @@ class SetupApp(tk.Frame):
             self.timestamp = time.time()
             self.update_current_image()
             self.update_lot()
-            self.parkinglot.saveUsage(os.getcwd() + self.stats_file + self.parkinglot.name + '.txt')
+            print self.stats_file
+            self.parkinglot.saveUsage(os.getcwd() + '/' + self.stats_file + self.parkinglot.name + '.txt')
 
         self.parkingspot_listbox.update_parkingspot_list()
 

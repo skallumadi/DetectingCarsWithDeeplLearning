@@ -65,7 +65,7 @@ class ParkingLot:
         message = time.strftime('%c') + ' : '
         for spot in self.getParkingSpots():
             message += str(spot.id) + ', ' + spot.status + '; '
-        with open(filePath, 'a') as outfile:
+        with open(filePath, 'a+') as outfile:
             outfile.write(message + '\n')
         pass
 
