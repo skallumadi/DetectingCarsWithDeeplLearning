@@ -94,7 +94,6 @@ class RoleSelect(tk.Frame):
         image_source = configparser.get('Settings', 'image_source')
         image_origin = configparser.get('Settings', 'image_origin')
         stats_file = configparser.get('Settings', 'stats_file')
-        print stats_file
 
         return image_origin, image_source, stats_file
 
@@ -154,6 +153,9 @@ class SetupApp(tk.Frame):
         self.vacant_label.grid(row=2, column=0, sticky='W')
         self.vacant_count_label.grid(row=2, column=1, sticky='W')
 
+        self.status_label = tk.Label(self, text="Not Processing")
+        self.status_label.grid(row=3, column=0, sticky='W')
+
         # bind events
         self.parent.bind('c', self.window_exit)
 
@@ -197,7 +199,10 @@ class SetupApp(tk.Frame):
         #    pass
         #else:
         #    threading.Thread(target=self.parkinglot.update, args=[]).start()
+        self.status_label.config(text="Processing")
+        self.status_label.update_idletasks()
         self.parkinglot.update()
+        self.status_label.config(text="Not Processing")
 
     def delete_selection(self):
         self.parkinglot.removeSpot(self.parkingspot_listbox.get_selection_id())
@@ -211,6 +216,11 @@ class SetupApp(tk.Frame):
 
     def update_toggle(self):
         self.update_toggle_bool = not self.update_toggle_bool
+        if self.update_toggle_bool:
+            self.toggleUpdateButton.config(bg='red')
+            self.toggleUpdateButton.update_idletasks()
+        else:
+            self.toggleUpdateButton.config(bg='#D9D9D9')
 
     def update_current_image(self):
         # take the image, or the first, image from the image_source_directory.
@@ -232,7 +242,6 @@ class SetupApp(tk.Frame):
             self.timestamp = time.time()
             self.update_current_image()
             self.update_lot()
-            print self.stats_file
             self.parkinglot.saveUsage(os.getcwd() + '/' + self.stats_file + self.parkinglot.name + '.txt')
 
         self.parkingspot_listbox.update_parkingspot_list()
