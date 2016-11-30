@@ -14,6 +14,7 @@ from ParkingLot import *
 
 import ConfigParser
 
+
 class RoleSelect(tk.Frame):
     def __init__(self, parent):
         self.parent = parent
